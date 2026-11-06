@@ -60,7 +60,7 @@
       '<div class="strip"><span class="on">Calculadoras</span><a href="https://fac.org.ar/" target="_blank" rel="noopener">fac.org.ar</a></div>' +
       '<header class="topbar">' +
       '<a class="brand" href="' + (back ? '../index.html' : 'index.html') + '">' +
-      '<img class="logo-img" src="' + (back ? '../' : '') + 'assets/logo-salud-digital.png" alt="FAC · Secretaría de Salud Digital"></a>' +
+      '<img class="logo-img" src="' + (back ? '../' : '') + 'assets/logo-fac.webp" alt="FAC · Federación Argentina de Cardiología"></a>' +
       (back ? '<a class="back" href="../index.html">← Menú</a>' : '') +
       '</header>'
     );
@@ -141,6 +141,7 @@
       '<div class="res-actions"><button type="button" class="btn primary" id="copy">Copiar resumen</button><button type="button" class="btn" id="reset">Reiniciar</button></div>' +
       '</div></aside></div>' +
       infoHTML(cfg) +
+      '<div class="foot-logo"><img src="../assets/logo-salud-digital.png" alt="FAC · Secretaría de Salud Digital"></div>' +
       '<p class="disclaimer">Herramienta de apoyo a la decisión clínica. No reemplaza el juicio médico.</p>' +
       '</main>' +
       '<div class="mini lvl-info" id="mini"><span class="n" id="mv">—</span><span class="t" id="mt">Completá los datos</span><span class="a">Ver ↓</span></div>' +

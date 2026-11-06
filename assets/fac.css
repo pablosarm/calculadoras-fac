@@ -108,8 +108,8 @@ button { font: inherit; }
 }
 .back:hover { background: #1e5b8d; transform: translateX(-2px); }
 .back { white-space: nowrap; flex: none; }
-.logo-img { display: block; height: 66px; width: auto; max-width: 100%; }
-@media (max-width: 520px) { .logo-img { height: 58px; } }
+.logo-img { display: block; height: 46px; width: auto; max-width: 100%; }
+@media (max-width: 520px) { .logo-img { height: 34px; } }
 /* En modo oscuro el logo va sobre una placa blanca para respetar sus colores */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .logo-img { background: #fff; padding: 6px 10px; border-radius: 12px; box-sizing: content-box; }
@@ -284,7 +284,7 @@ button { font: inherit; }
 @media (max-width: 900px) { .mini { display: flex; } .mini.show { transform: none; } body { padding-bottom: 80px; } }
 
 /* ---------- Información ---------- */
-.info { margin-top: 26px; display: grid; gap: 18px; }
+.info { margin-top: 26px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .info .panel { padding: 18px 20px; }
 .info h2 { margin: 0 0 12px; font-size: 17px; color: var(--navy); }
 .info p, .info li { color: var(--muted); font-size: 14.5px; }
@@ -310,24 +310,30 @@ button { font: inherit; }
 
 /* ---------- Menú principal ---------- */
 .hero {
-  position: relative; overflow: hidden;
-  margin: 8px 0 22px; padding: 40px 32px; border-radius: 32px;
-  background: linear-gradient(135deg, #001c71 0%, #0d3a80 55%, #1e5b8d 100%);
-  color: #fff;
+  display: grid; grid-template-columns: minmax(220px, 360px) minmax(0, 1fr); gap: 36px; align-items: center;
+  margin: 8px 0 26px; padding: 40px 44px; border-radius: 32px;
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow);
+  color: var(--ink);
 }
-.hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; }
-.hero::before { right: 40px; top: -90px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(108, 172, 228, .55) 0%, rgba(108, 172, 228, 0) 70%); }
-.hero::after { right: -80px; top: -20px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(232, 60, 59, .45) 0%, rgba(232, 60, 59, 0) 70%); }
-.hero h1 { margin: 0 0 6px; font-size: clamp(28px, 5vw, 40px); letter-spacing: -.02em; line-height: 1.1; position: relative; z-index: 1; }
-.hero p { margin: 0; opacity: .85; max-width: 56ch; position: relative; z-index: 1; }
+.hero-logo img { display: block; width: 100%; max-width: 360px; height: auto; }
+.hero h1 { margin: 0 0 10px; font-size: clamp(28px, 4.5vw, 38px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; color: var(--navy); }
+.hero p { margin: 0; color: var(--ink); max-width: 70ch; line-height: 1.4; }
+@media (max-width: 760px) {
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 22px; padding: 28px 22px; border-radius: 26px; }
+  .hero-logo img { max-width: 260px; }
+}
 .search {
-  position: relative; z-index: 1; margin-top: 20px; max-width: 520px;
+  margin-top: 22px; max-width: 560px;
   display: flex; align-items: center; gap: 10px;
-  padding: 0 20px; border-radius: 32px; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .25);
+  padding: 0 20px; border-radius: 32px; background: var(--bg); border: 1px solid var(--line);
+  transition: border-color .15s, box-shadow .15s;
 }
-.search svg { width: 18px; height: 18px; opacity: .8; flex: none; }
-.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #fff; font-size: 16px; padding: 13px 0; }
-.search input::placeholder { color: rgba(255, 255, 255, .7); }
+.search:focus-within { border-color: var(--navy-2); box-shadow: 0 0 0 4px rgba(30, 91, 141, .15); background: var(--card); }
+.search svg { width: 18px; height: 18px; color: var(--navy-2); flex: none; }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 16px; padding: 13px 0; }
+.search input::placeholder { color: var(--muted); }
+.foot-logo { display: flex; justify-content: center; margin-top: 34px; }
+.foot-logo img { height: 64px; width: auto; }
 .filters { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 14px; scrollbar-width: none; }
 .filters::-webkit-scrollbar { display: none; }
 .filters button {

@@ -4,20 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Calculadoras FAC</title>
-<link rel="stylesheet" href="assets/fac.css?v=2">
+<link rel="stylesheet" href="assets/fac.css?v=3">
 </head>
 <body>
-<script src="assets/fac.js?v=2"></script>
-<script src="assets/registry.js?v=2"></script>
+<script src="assets/fac.js?v=3"></script>
+<script src="assets/registry.js?v=3"></script>
 <div id="top"></div>
 <main class="wrap">
   <section class="hero">
-    <h1>Calculadoras</h1>
-    <p>Scores y fórmulas de uso diario, rápidos y sin vueltas.</p>
-    <label class="search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="Buscar: GRACE, sangrado, TEP, LDL…" autocomplete="off">
-    </label>
+    <div class="hero-logo"><img src="assets/logo-salud-digital.png" alt="FAC · Secretaría de Salud Digital"></div>
+    <div class="hero-body">
+      <h1>Calculadoras</h1>
+      <p>Scores de riesgo, fórmulas y clasificaciones de uso diario en cardiología, reunidos por la Secretaría de Salud Digital para acompañar la toma de decisiones clínicas basada en evidencia.</p>
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar: GRACE, sangrado, TEP, LDL…" autocomplete="off">
+      </label>
+    </div>
   </section>
   <nav class="filters" id="filters"></nav>
   <div id="list"></div>
