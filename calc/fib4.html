@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FIB-4 · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'FIB-4',
+  category: 'Cardiometabolismo',
+  desc: 'FIB-4 = edad × AST / (plaquetas × √ALT). Estima fibrosis hepática avanzada en la enfermedad hepática esteatósica metabólica (MASLD).',
+  fields: [
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 18, max: 110 },
+    { type: 'number', id: 'ast', label: 'AST (GOT)', unit: 'UI/L', min: 1, max: 5000 },
+    { type: 'number', id: 'alt', label: 'ALT (GPT)', unit: 'UI/L', min: 1, max: 5000 },
+    { type: 'number', id: 'plt', label: 'Plaquetas', unit: '×10³/µL', min: 5, max: 2000, hint: 'Ej.: 250.000/µL → 250' }
+  ],
+  compute: function (v) {
+    if ([v.age, v.ast, v.alt, v.plt].some(function (x) { return x == null; })) return { incomplete: 'Completá edad, AST, ALT y plaquetas.' };
+    var f = (v.age * v.ast) / (v.plt * Math.sqrt(v.alt));
+    var low = v.age >= 65 ? 2.0 : 1.3;
+    var cat = f < low ? 0 : f <= 2.67 ? 1 : 2;
+    var det = [
+      'Bajo riesgo de fibrosis avanzada. Repetir en 1–3 años según factores de riesgo.',
+      'Resultado indeterminado: se sugiere elastografía hepática (FibroScan) o ELF.',
+      'Alto riesgo de fibrosis avanzada: derivar a hepatología.'
+    ][cat];
+    if (v.age < 35) det += '<br><small style="color:var(--muted)">Menor precisión en menores de 35 años.</small>';
+    return {
+      value: FAC.fmt(f, 2), score: f, unit: '',
+      label: ['Riesgo bajo', 'Indeterminado', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat, detail: det,
+      extra: [['Punto de corte bajo usado', FAC.fmt(low, 2) + (v.age >= 65 ? ' (≥ 65 años)' : '')]]
+    };
+  },
+  scale: { min: 0, max: 4, bands: [{ to: 1.3, level: 'low' }, { to: 2.67, level: 'mid' }, { to: 4, level: 'high' }] },
+  table: {
+    head: ['FIB-4', 'Fibrosis avanzada', 'Conducta'],
+    rows: [['< 1,30 (< 2,0 si ≥ 65 años)', 'Baja probabilidad', 'Seguimiento'], ['1,30–2,67', 'Indeterminado', 'Elastografía'], ['> 2,67', 'Alta probabilidad', 'Derivar a hepatología']]
+  },
+  refs: [
+    'Sterling RK, et al. Development of a simple noninvasive index to predict significant fibrosis in patients with HIV/HCV coinfection. Hepatology. 2006;43:1317-25.',
+    'McPherson S, et al. Age as a confounding factor for the accurate non-invasive diagnosis of advanced NAFLD fibrosis. Am J Gastroenterol. 2017;112:740-51.',
+    'EASL-EASD-EASO Clinical Practice Guidelines on the management of MASLD. J Hepatol. 2024;81:492-542.'
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Zwolle · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'Zwolle',
+  category: 'Enfermedad coronaria',
+  desc: 'Identifica a pacientes con IAMCEST tratados con angioplastia primaria con bajo riesgo, candidatos a alta temprana.',
+  fields: [
+    { type: 'choice', id: 'killip', label: 'Clase Killip', options: [
+      { label: 'I', points: 0 }, { label: 'II', points: 4 }, { label: 'III–IV', points: 9 } ] },
+    { type: 'choice', id: 'timi', label: 'Flujo TIMI post-angioplastia', options: [
+      { label: 'TIMI 3', points: 0 }, { label: 'TIMI 2', points: 1 }, { label: 'TIMI 0–1', points: 2 } ] },
+    { type: 'section', label: 'Otros criterios' },
+    { type: 'check', id: 'age', label: 'Edad ≥ 60 años', points: 2 },
+    { type: 'check', id: 'mvd', label: 'Enfermedad de tres vasos', points: 1 },
+    { type: 'check', id: 'ant', label: 'Infarto de cara anterior', points: 1 },
+    { type: 'check', id: 'time', label: 'Tiempo de isquemia > 4 h', points: 1 }
+  ],
+  compute: function (v, t) {
+    if (v.killip == null || v.timi == null) return { incomplete: 'Seleccioná la clase Killip y el flujo TIMI final.' };
+    var low = t <= 3;
+    return {
+      value: t, unit: '/ 16',
+      label: low ? 'Bajo riesgo' : 'No es bajo riesgo',
+      level: low ? 'low' : 'high', row: low ? 0 : 1,
+      detail: low
+        ? 'Mortalidad muy baja a 30 días. Candidato a alta temprana (≤ 72 h) si la evolución es favorable.'
+        : 'Mayor riesgo de eventos. No se recomienda el alta temprana.'
+    };
+  },
+  scale: { min: 0, max: 16, bands: [{ to: 3.5, level: 'low' }, { to: 16, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Riesgo', 'Conducta'],
+    rows: [['≤ 3', 'Bajo', 'Alta temprana (≤ 72 h) segura'], ['> 3', 'No bajo', 'Internación convencional']]
+  },
+  notes: '<p>Las guías ESC 2023 consideran razonable el alta temprana (24–72 h) en pacientes de bajo riesgo tras una angioplastia primaria exitosa, con rehabilitación y seguimiento adecuados.</p>',
+  refs: [
+    'De Luca G, et al. Risk profile and benefits from Gp IIb-IIIa inhibitors among patients with ST-segment elevation myocardial infarction treated with primary angioplasty. Circulation. 2004;109:2737-43.',
+    'Byrne RA, et al. 2023 ESC Guidelines for the management of acute coronary syndromes. Eur Heart J. 2023;44:3720-3826.'
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Índice TyG · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'Índice TyG',
+  category: 'Cardiometabolismo',
+  desc: 'Índice triglicéridos-glucosa: TyG = ln[triglicéridos (mg/dL) × glucemia (mg/dL) / 2]. Marcador subrogante de insulinorresistencia.',
+  fields: [
+    { type: 'number', id: 'tg', label: 'Triglicéridos en ayunas', unit: 'mg/dL', min: 10, max: 5000 },
+    { type: 'number', id: 'glu', label: 'Glucemia en ayunas', unit: 'mg/dL', min: 30, max: 1000 }
+  ],
+  compute: function (v) {
+    if (v.tg == null || v.glu == null) return { incomplete: 'Ingresá triglicéridos y glucemia en ayunas.' };
+    var t = Math.log(v.tg * v.glu / 2);
+    var hi = t >= 8.5;
+    return {
+      value: FAC.fmt(t, 2), score: t, unit: '',
+      label: hi ? 'Sugiere insulinorresistencia' : 'Por debajo del punto de corte',
+      level: hi ? 'mid' : 'low', row: hi ? 1 : 0,
+      detail: 'Valores más altos se asocian a mayor insulinorresistencia y riesgo cardiovascular.'
+    };
+  },
+  scale: { min: 7, max: 10.5, bands: [{ to: 8.5, level: 'low' }, { to: 10.5, level: 'mid' }] },
+  table: { head: ['TyG', 'Interpretación orientativa'], rows: [['< 8,5', 'Por debajo del punto de corte habitual'], ['≥ 8,5', 'Sugiere insulinorresistencia']] },
+  notes: '<p>No hay un punto de corte universal: los valores propuestos varían entre ~8,3 y 8,8 según la población estudiada. Se usa 8,5 como referencia orientativa.</p>',
+  refs: [
+    'Simental-Mendía LE, Rodríguez-Morán M, Guerrero-Romero F. The product of fasting glucose and triglycerides as surrogate for identifying insulin resistance in apparently healthy subjects. Metab Syndr Relat Disord. 2008;6:299-304.',
+    'Guerrero-Romero F, et al. The product of triglycerides and glucose, a simple measure of insulin sensitivity. J Clin Endocrinol Metab. 2010;95:3347-51.'
+  ]
+});
+</script>
+</body>
+</html>

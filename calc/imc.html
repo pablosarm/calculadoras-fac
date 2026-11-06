@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IMC · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var CAT = [
+  ['< 18,5', 'Bajo peso', 'mid'], ['18,5–24,9', 'Peso normal', 'low'], ['25–29,9', 'Sobrepeso', 'mid'],
+  ['30–34,9', 'Obesidad grado I', 'high'], ['35–39,9', 'Obesidad grado II', 'high'], ['≥ 40', 'Obesidad grado III', 'high']
+];
+FAC.calc({
+  title: 'Índice de masa corporal',
+  category: 'Cardiometabolismo',
+  desc: 'IMC = peso / talla². Clasificación según la Organización Mundial de la Salud para adultos.',
+  fields: [
+    { type: 'number', id: 'kg', label: 'Peso', unit: 'kg', min: 20, max: 350 },
+    { type: 'number', id: 'cm', label: 'Talla', unit: 'cm', min: 100, max: 250 }
+  ],
+  compute: function (v) {
+    if (v.kg == null || v.cm == null) return { incomplete: 'Ingresá peso y talla.' };
+    var m = v.cm / 100, bmi = v.kg / (m * m);
+    var i = FAC.band(bmi, [[18.5, 0], [25, 1], [30, 2], [35, 3], [40, 4], [0, 5]]);
+    return {
+      value: FAC.fmt(bmi, 1), score: bmi, unit: 'kg/m²',
+      label: CAT[i][1], level: CAT[i][2], row: i,
+      extra: [['Peso para IMC 18,5–24,9', FAC.fmt(18.5 * m * m, 0) + '–' + FAC.fmt(24.9 * m * m, 0) + ' kg']]
+    };
+  },
+  scale: { min: 15, max: 45, bands: [{ to: 18.5, level: 'mid' }, { to: 25, level: 'low' }, { to: 30, level: 'mid' }, { to: 45, level: 'high' }] },
+  table: { head: ['IMC (kg/m²)', 'Categoría'], rows: CAT.map(function (c) { return [c[0], c[1]]; }) },
+  notes: '<p>El IMC no distingue masa grasa de masa magra ni la distribución de la grasa. Complementar con el índice cintura-talla o la circunferencia de cintura.</p>',
+  refs: ['World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Ginebra; 2000.']
+});
+</script>
+</body>
+</html>

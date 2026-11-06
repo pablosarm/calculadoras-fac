@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TIMI (IAMCEST) · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var MORT = ['0,8%', '1,6%', '2,2%', '4,4%', '7,3%', '12,4%', '16,1%', '23,4%', '26,8%', '35,9%'];
+FAC.calc({
+  title: 'TIMI (IAMCEST)',
+  category: 'Enfermedad coronaria',
+  desc: 'Estima la mortalidad a 30 días en pacientes con infarto con elevación del ST candidatos a reperfusión.',
+  fields: [
+    { type: 'choice', id: 'age', label: 'Edad', options: [
+      { label: '< 65', points: 0 }, { label: '65–74', points: 2 }, { label: '≥ 75', points: 3 } ] },
+    { type: 'section', label: 'Antecedentes y presentación' },
+    { type: 'check', id: 'hx', label: 'Diabetes, HTA o angina previa', points: 1 },
+    { type: 'check', id: 'sbp', label: 'PAS < 100 mmHg', points: 3 },
+    { type: 'check', id: 'hr', label: 'FC > 100 lpm', points: 2 },
+    { type: 'check', id: 'killip', label: 'Killip II–IV', points: 2 },
+    { type: 'check', id: 'wt', label: 'Peso < 67 kg', points: 1 },
+    { type: 'check', id: 'ant', label: 'Elevación del ST anterior o BRI', points: 1 },
+    { type: 'check', id: 'time', label: 'Tiempo hasta el tratamiento > 4 h', points: 1 }
+  ],
+  compute: function (v, t) {
+    if (v.age == null) return { incomplete: 'Seleccioná el rango de edad.' };
+    var i = Math.min(t, 9);
+    var lvl = t <= 3 ? 'low' : t <= 6 ? 'mid' : 'high';
+    return {
+      value: t, unit: '/ 14',
+      label: lvl === 'low' ? 'Riesgo bajo' : lvl === 'mid' ? 'Riesgo intermedio' : 'Riesgo alto',
+      level: lvl, row: i,
+      detail: 'Mortalidad a 30 días: <b>' + MORT[i] + '</b>.'
+    };
+  },
+  scale: { min: 0, max: 14, bands: [{ to: 3.5, level: 'low' }, { to: 6.5, level: 'mid' }, { to: 14, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Mortalidad a 30 días'],
+    rows: MORT.map(function (m, i) { return [i === 9 ? '> 8' : String(i), m]; })
+  },
+  refs: ['Morrow DA, et al. TIMI risk score for ST-elevation myocardial infarction: a convenient, bedside, clinical score for risk assessment at presentation. Circulation. 2000;102:2031-7.']
+});
+</script>
+</body>
+</html>

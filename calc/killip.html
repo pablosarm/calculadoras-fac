@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Killip-Kimball · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var K = [
+  { c: 'I', d: 'Sin signos de insuficiencia cardíaca', m: '6%', l: 'low' },
+  { c: 'II', d: 'Insuficiencia cardíaca leve-moderada', m: '17%', l: 'mid' },
+  { c: 'III', d: 'Edema agudo de pulmón', m: '38%', l: 'high' },
+  { c: 'IV', d: 'Shock cardiogénico', m: '81%', l: 'high' }
+];
+FAC.calc({
+  title: 'Killip-Kimball',
+  category: 'Enfermedad coronaria',
+  desc: 'Clasificación clínica de la insuficiencia cardíaca en el infarto agudo de miocardio, con valor pronóstico.',
+  fields: [
+    { type: 'choice', id: 'k', label: 'Hallazgos al examen físico', stack: true, hidePoints: true, options: [
+      { label: 'Clase I', hint: 'Sin estertores ni tercer ruido' },
+      { label: 'Clase II', hint: 'Estertores en < 50% de los campos pulmonares, R3 o ingurgitación yugular' },
+      { label: 'Clase III', hint: 'Edema agudo de pulmón: estertores en > 50% de los campos pulmonares' },
+      { label: 'Clase IV', hint: 'Shock cardiogénico: hipotensión (PAS < 90 mmHg) con signos de hipoperfusión' } ] }
+  ],
+  compute: function (v) {
+    if (v.k == null) return { incomplete: 'Seleccioná la clase según el examen físico.' };
+    var k = K[v.k];
+    return { value: k.c, unit: 'Killip', label: k.d, level: k.l, row: v.k,
+      detail: 'Mortalidad intrahospitalaria en la serie original: <b>' + k.m + '</b>. Las cifras actuales, en la era de la reperfusión, son menores.' };
+  },
+  table: { head: ['Clase', 'Descripción', 'Mortalidad (serie original)'], rows: K.map(function (k) { return [k.c, k.d, k.m]; }) },
+  refs: ['Killip T, Kimball JT. Treatment of myocardial infarction in a coronary care unit: a two year experience with 250 patients. Am J Cardiol. 1967;20:457-64.']
+});
+</script>
+</body>
+</html>

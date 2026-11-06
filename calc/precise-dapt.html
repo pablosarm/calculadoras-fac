@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PRECISE-DAPT · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'PRECISE-DAPT',
+  category: 'Enfermedad coronaria',
+  desc: 'Estima el riesgo de sangrado durante la doble antiagregación plaquetaria tras una angioplastia, para orientar su duración.',
+  fields: [
+    { type: 'number', id: 'hb', label: 'Hemoglobina', unit: 'g/dL', min: 3, max: 22 },
+    { type: 'number', id: 'wbc', label: 'Glóbulos blancos', unit: '×10³/µL', min: 0.5, max: 100 },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 18, max: 110 },
+    { type: 'section', label: 'Clearance de creatinina', hint: 'Se calcula con Cockcroft-Gault' },
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Masculino', value: 'm' }, { label: 'Femenino', value: 'f' }] },
+    { type: 'number', id: 'kg', label: 'Peso', unit: 'kg', min: 25, max: 300 },
+    { type: 'number', id: 'cr', label: 'Creatinina', unit: 'mg/dL', min: 0.1, max: 20 },
+    { type: 'section', label: 'Antecedentes' },
+    { type: 'check', id: 'bleed', label: 'Sangrado espontáneo previo' }
+  ],
+  compute: function (v) {
+    if ([v.hb, v.wbc, v.age, v.kg, v.cr].some(function (x) { return x == null; }) || v.sex == null)
+      return { incomplete: 'Completá hemoglobina, glóbulos blancos, edad, sexo, peso y creatinina.' };
+    var crcl = FAC.cockcroft(v.age, v.kg, v.cr, v.sex === 'f');
+    var a = FAC.clamp(v.age, 50, 90), c = FAC.clamp(crcl, 0, 100), h = FAC.clamp(v.hb, 10, 12), w = FAC.clamp(v.wbc, 5, 20);
+    var k = 100 / 5.52784356;
+    var pa = k * 0.02595618 * (a - 50), pc = k * -0.0140439 * (c - 100), ph = k * -0.40551264 * (h - 12),
+        pw = k * 0.05697497 * (w - 5), pb = v.bleed ? k * 1.41955653 : 0;
+    var s = Math.round(Math.min(100, pa + pc + ph + pw + pb));
+    var high = s >= 25;
+    return {
+      value: s, unit: '/ 100',
+      label: high ? 'Alto riesgo de sangrado' : 'Riesgo de sangrado no alto',
+      level: high ? 'high' : 'low', row: high ? 1 : 0,
+      detail: high
+        ? 'Considerar doble antiagregación abreviada (3–6 meses).'
+        : 'Doble antiagregación estándar (12 meses) o prolongada, según el riesgo isquémico.',
+      extra: [['Clearance (Cockcroft-Gault)', FAC.fmt(crcl, 0) + ' mL/min'], ['Hemoglobina', FAC.fmt(ph, 1) + ' pts'], ['Glóbulos blancos', FAC.fmt(pw, 1) + ' pts'], ['Edad', FAC.fmt(pa, 1) + ' pts'], ['Clearance', FAC.fmt(pc, 1) + ' pts'], ['Sangrado previo', FAC.fmt(pb, 1) + ' pts']]
+    };
+  },
+  scale: { min: 0, max: 100, bands: [{ to: 25, level: 'low' }, { to: 100, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Riesgo de sangrado', 'Duración sugerida de DAPT'],
+    rows: [['< 25', 'No alto', 'Estándar (12 meses) o prolongada'], ['≥ 25', 'Alto', 'Abreviada (3–6 meses)']]
+  },
+  notes: '<p>Se calcula con la ecuación del nomograma original. Los valores se acotan a: edad 50–90 años, clearance ≤ 100 mL/min, hemoglobina 10–12 g/dL y glóbulos blancos 5–20 ×10³/µL.</p>',
+  refs: ['Costa F, et al. Derivation and validation of the predicting bleeding complications in patients undergoing stent implantation and subsequent dual antiplatelet therapy (PRECISE-DAPT) score. Lancet. 2017;389:1025-34.']
+});
+</script>
+</body>
+</html>

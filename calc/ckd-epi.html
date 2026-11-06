@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Filtrado glomerular (CKD-EPI) · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var G = [['G1', '≥ 90', 'Normal o alto', 'low'], ['G2', '60–89', 'Levemente disminuido', 'low'], ['G3a', '45–59', 'Leve a moderadamente disminuido', 'mid'], ['G3b', '30–44', 'Moderada a severamente disminuido', 'mid'], ['G4', '15–29', 'Severamente disminuido', 'high'], ['G5', '< 15', 'Falla renal', 'high']];
+FAC.calc({
+  title: 'Filtrado glomerular (CKD-EPI)',
+  category: 'Otros',
+  desc: 'Tasa de filtrado glomerular estimada con la ecuación CKD-EPI 2021 (sin coeficiente racial). Opcionalmente, clearance de creatinina por Cockcroft-Gault.',
+  fields: [
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Masculino', value: 'm' }, { label: 'Femenino', value: 'f' }] },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 18, max: 110 },
+    { type: 'number', id: 'cr', label: 'Creatinina sérica', unit: 'mg/dL', min: 0.1, max: 25 },
+    { type: 'section', label: 'Opcional', hint: 'Para calcular Cockcroft-Gault (ajuste de dosis de fármacos)' },
+    { type: 'number', id: 'kg', label: 'Peso', unit: 'kg', min: 25, max: 300 }
+  ],
+  compute: function (v) {
+    if (v.sex == null || v.age == null || v.cr == null) return { incomplete: 'Ingresá sexo, edad y creatinina.' };
+    var f = v.sex === 'f', k = f ? 0.7 : 0.9, a = f ? -0.241 : -0.302, r = v.cr / k;
+    var egfr = 142 * Math.pow(Math.min(r, 1), a) * Math.pow(Math.max(r, 1), -1.2) * Math.pow(0.9938, v.age) * (f ? 1.012 : 1);
+    var i = egfr >= 90 ? 0 : egfr >= 60 ? 1 : egfr >= 45 ? 2 : egfr >= 30 ? 3 : egfr >= 15 ? 4 : 5;
+    var extra = [['Estadio KDIGO', G[i][0]]];
+    if (v.kg != null) extra.push(['Cockcroft-Gault', FAC.fmt(FAC.cockcroft(v.age, v.kg, v.cr, f), 0) + ' mL/min']);
+    return {
+      value: FAC.fmt(egfr, 0), score: egfr, unit: 'mL/min/1,73 m²',
+      label: G[i][0] + ' · ' + G[i][2], level: G[i][3], row: i,
+      detail: i <= 1 ? 'Para diagnosticar enfermedad renal crónica en G1–G2 se requieren marcadores de daño renal (p. ej., albuminuria).' : '',
+      extra: extra
+    };
+  },
+  scale: { min: 0, max: 120, bands: [{ to: 15, level: 'high' }, { to: 30, level: 'high' }, { to: 60, level: 'mid' }, { to: 120, level: 'low' }] },
+  table: { title: 'Estadios KDIGO', head: ['Estadio', 'TFG (mL/min/1,73 m²)', 'Descripción'], rows: G.map(function (g) { return g.slice(0, 3); }) },
+  notes: '<p>CKD-EPI 2021: TFG = 142 × min(Cr/κ, 1)<sup>α</sup> × max(Cr/κ, 1)<sup>−1,200</sup> × 0,9938<sup>edad</sup> × 1,012 [mujer]; κ = 0,7 (mujer) / 0,9 (hombre); α = −0,241 (mujer) / −0,302 (hombre).</p><p>Para el ajuste de dosis de anticoagulantes directos se usa habitualmente Cockcroft-Gault.</p>',
+  refs: [
+    'Inker LA, et al. New creatinine- and cystatin C-based equations to estimate GFR without race. N Engl J Med. 2021;385:1737-49.',
+    'KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. Kidney Int. 2024;105(4S):S117-S314.',
+    'Cockcroft DW, Gault MH. Prediction of creatinine clearance from serum creatinine. Nephron. 1976;16:31-41.'
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wells (TEP) · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'Wells (TEP)',
+  category: 'Tromboembolismo pulmonar',
+  desc: 'Estima la probabilidad clínica pretest de tromboembolismo pulmonar.',
+  fields: [
+    { type: 'check', id: 'dvt', label: 'Signos clínicos de TVP', hint: 'Edema y dolor a la palpación de venas profundas', points: 3 },
+    { type: 'check', id: 'alt', label: 'TEP como diagnóstico más probable', hint: 'Diagnósticos alternativos menos probables', points: 3 },
+    { type: 'check', id: 'hr', label: 'Frecuencia cardíaca > 100 lpm', points: 1.5 },
+    { type: 'check', id: 'imm', label: 'Inmovilización ≥ 3 días o cirugía en las últimas 4 semanas', points: 1.5 },
+    { type: 'check', id: 'prev', label: 'TVP o TEP previos', points: 1.5 },
+    { type: 'check', id: 'hemo', label: 'Hemoptisis', points: 1 },
+    { type: 'check', id: 'ca', label: 'Cáncer activo', hint: 'En tratamiento, tratado en los últimos 6 meses o paliativo', points: 1 }
+  ],
+  compute: function (v, t) {
+    var cat = t < 2 ? 0 : t <= 6 ? 1 : 2;
+    var likely = t > 4;
+    return {
+      value: FAC.fmt(t, t % 1 ? 1 : 0), score: t, unit: 'puntos',
+      label: ['Probabilidad baja', 'Probabilidad moderada', 'Probabilidad alta'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat,
+      detail: likely
+        ? '<b>TEP probable</b> (> 4): angiotomografía pulmonar.'
+        : '<b>TEP improbable</b> (≤ 4): solicitar dímero D; si es negativo, se descarta TEP.'
+    };
+  },
+  scale: { min: 0, max: 12.5, bands: [{ to: 2, level: 'low' }, { to: 6, level: 'mid' }, { to: 12.5, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Probabilidad', 'Esquema de dos niveles'],
+    rows: [['< 2', 'Baja', 'TEP improbable (≤ 4)'], ['2–6', 'Moderada', '≤ 4 improbable · > 4 probable'], ['> 6', 'Alta', 'TEP probable (> 4)']]
+  },
+  refs: [
+    'Wells PS, et al. Derivation of a simple clinical model to categorize patients probability of pulmonary embolism. Thromb Haemost. 2000;83:416-20.',
+    'Konstantinides SV, et al. 2019 ESC Guidelines for the diagnosis and management of acute pulmonary embolism. Eur Heart J. 2020;41:543-603.'
+  ]
+});
+</script>
+</body>
+</html>

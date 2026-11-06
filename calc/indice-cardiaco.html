@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Índice cardíaco · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'Índice cardíaco',
+  category: 'Insuficiencia cardíaca',
+  desc: 'Gasto cardíaco ajustado por superficie corporal (fórmula de Mosteller).',
+  fields: [
+    { type: 'choice', id: 'mode', label: 'Dato disponible', default: 0, options: [
+      { label: 'Gasto cardíaco', value: 'gc' }, { label: 'FC × volumen sistólico', value: 'vs' } ] },
+    { type: 'number', id: 'gc', label: 'Gasto cardíaco', unit: 'L/min', min: 0.5, max: 20, showIf: function (v) { return v.mode === 'gc'; } },
+    { type: 'number', id: 'fc', label: 'Frecuencia cardíaca', unit: 'lpm', min: 20, max: 250, showIf: function (v) { return v.mode === 'vs'; } },
+    { type: 'number', id: 'vs', label: 'Volumen sistólico', unit: 'mL', min: 5, max: 250, showIf: function (v) { return v.mode === 'vs'; } },
+    { type: 'section', label: 'Superficie corporal' },
+    { type: 'number', id: 'kg', label: 'Peso', unit: 'kg', min: 2, max: 300 },
+    { type: 'number', id: 'cm', label: 'Talla', unit: 'cm', min: 40, max: 250 }
+  ],
+  compute: function (v) {
+    var gc = v.mode === 'gc' ? v.gc : (v.fc != null && v.vs != null ? v.fc * v.vs / 1000 : null);
+    if (gc == null || v.kg == null || v.cm == null) return { incomplete: 'Completá el gasto cardíaco (o FC y volumen sistólico), peso y talla.' };
+    var sc = Math.sqrt(v.kg * v.cm / 3600), ic = gc / sc;
+    var cat = ic < 1.8 ? 0 : ic < 2.2 ? 1 : ic < 2.5 ? 2 : ic <= 4 ? 3 : 4;
+    var extra = [['Gasto cardíaco', FAC.fmt(gc, 2) + ' L/min'], ['Superficie corporal', FAC.fmt(sc, 2) + ' m²']];
+    if (v.mode === 'vs') extra.push(['Volumen sistólico indexado', FAC.fmt(v.vs / sc, 1) + ' mL/m²']);
+    return {
+      value: FAC.fmt(ic, 2), score: ic, unit: 'L/min/m²',
+      label: ['Severamente disminuido', 'Disminuido', 'Levemente disminuido', 'Normal', 'Elevado'][cat],
+      level: ['high', 'high', 'mid', 'low', 'info'][cat], row: cat,
+      detail: [
+        'Compatible con bajo gasto severo / shock cardiogénico si hay hipoperfusión.',
+        'Bajo gasto: IC < 2,2 L/min/m² es criterio hemodinámico de shock cardiogénico con soporte.',
+        'Por debajo del rango normal.',
+        'Dentro del rango normal (2,5–4,0 L/min/m²).',
+        'Estado hiperdinámico (sepsis, anemia, tirotoxicosis, fístula AV, etc.).'
+      ][cat],
+      extra: extra
+    };
+  },
+  scale: { min: 0, max: 6, bands: [{ to: 2.2, level: 'high' }, { to: 2.5, level: 'mid' }, { to: 4, level: 'low' }, { to: 6, level: 'info' }] },
+  table: {
+    head: ['Índice cardíaco (L/min/m²)', 'Interpretación'],
+    rows: [['< 1,8', 'Severamente disminuido'], ['1,8–2,19', 'Disminuido'], ['2,2–2,49', 'Levemente disminuido'], ['2,5–4,0', 'Normal'], ['> 4,0', 'Elevado']]
+  },
+  notes: '<p>IC = GC / SC. Superficie corporal (Mosteller) = √(peso × talla / 3600). GC = FC × VS / 1000.</p>',
+  refs: ['Mosteller RD. Simplified calculation of body-surface area. N Engl J Med. 1987;317:1098.']
+});
+</script>
+</body>
+</html>

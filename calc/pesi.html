@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PESI · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var CLS = [['I', '≤ 65', 'Muy bajo', '0–1,6%', 'low'], ['II', '66–85', 'Bajo', '1,7–3,5%', 'low'], ['III', '86–105', 'Moderado', '3,2–7,1%', 'mid'], ['IV', '106–125', 'Alto', '4,0–11,4%', 'high'], ['V', '> 125', 'Muy alto', '10,0–24,5%', 'high']];
+FAC.calc({
+  title: 'PESI',
+  category: 'Tromboembolismo pulmonar',
+  desc: 'Pulmonary Embolism Severity Index: estima la mortalidad a 30 días en pacientes con TEP confirmado.',
+  fields: [
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 18, max: 110, hint: '1 punto por año' },
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Masculino', points: 10 }, { label: 'Femenino', points: 0 }] },
+    { type: 'section', label: 'Comorbilidades' },
+    { type: 'check', id: 'ca', label: 'Cáncer', points: 30 },
+    { type: 'check', id: 'hf', label: 'Insuficiencia cardíaca crónica', points: 10 },
+    { type: 'check', id: 'lung', label: 'Enfermedad pulmonar crónica', points: 10 },
+    { type: 'section', label: 'Hallazgos clínicos' },
+    { type: 'check', id: 'hr', label: 'Frecuencia cardíaca ≥ 110 lpm', points: 20 },
+    { type: 'check', id: 'sbp', label: 'PAS < 100 mmHg', points: 30 },
+    { type: 'check', id: 'rr', label: 'Frecuencia respiratoria ≥ 30/min', points: 20 },
+    { type: 'check', id: 'temp', label: 'Temperatura < 36 °C', points: 20 },
+    { type: 'check', id: 'ams', label: 'Alteración del estado mental', hint: 'Desorientación, letargo, estupor o coma', points: 60 },
+    { type: 'check', id: 'sat', label: 'Saturación arterial de O₂ < 90%', points: 20 }
+  ],
+  compute: function (v, t) {
+    if (v.age == null || v.sex == null) return { incomplete: 'Ingresá edad y sexo.' };
+    var s = Math.round(v.age) + t;
+    var i = s <= 65 ? 0 : s <= 85 ? 1 : s <= 105 ? 2 : s <= 125 ? 3 : 4;
+    return {
+      value: s, unit: 'puntos',
+      label: 'Clase ' + CLS[i][0] + ' · riesgo ' + CLS[i][2].toLowerCase(),
+      level: CLS[i][4], row: i,
+      detail: 'Mortalidad a 30 días: <b>' + CLS[i][3] + '</b>.' + (i >= 2 ? ' Clases III–V: riesgo al menos intermedio; evaluar función del VD (eco/TC) y troponina.' : ' Clases I–II: candidato a manejo ambulatorio o alta temprana si no hay otros criterios de riesgo.')
+    };
+  },
+  scale: { min: 20, max: 200, bands: [{ to: 85, level: 'low' }, { to: 105, level: 'mid' }, { to: 200, level: 'high' }] },
+  table: { head: ['Clase', 'Puntaje', 'Riesgo', 'Mortalidad a 30 días'], rows: CLS.map(function (c) { return c.slice(0, 4); }) },
+  refs: [
+    'Aujesky D, et al. Derivation and validation of a prognostic model for pulmonary embolism. Am J Respir Crit Care Med. 2005;172:1041-6.',
+    'Konstantinides SV, et al. 2019 ESC Guidelines for the diagnosis and management of acute pulmonary embolism. Eur Heart J. 2020;41:543-603.'
+  ]
+});
+</script>
+</body>
+</html>

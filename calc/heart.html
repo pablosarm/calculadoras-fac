@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HEART · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'HEART',
+  category: 'Enfermedad coronaria',
+  desc: 'Estratifica a pacientes con dolor torácico en la guardia según el riesgo de eventos cardiovasculares mayores (MACE) a 6 semanas.',
+  fields: [
+    { type: 'choice', id: 'h', label: '<u>H</u>istoria clínica', stack: true, options: [
+      { label: 'Levemente sospechosa', points: 0 },
+      { label: 'Moderadamente sospechosa', points: 1 },
+      { label: 'Altamente sospechosa', points: 2 } ] },
+    { type: 'choice', id: 'e', label: '<u>E</u>CG', stack: true, options: [
+      { label: 'Normal', points: 0 },
+      { label: 'Alteraciones inespecíficas de la repolarización', hint: 'BRI, HVI, marcapasos, cambios de repolarización', points: 1 },
+      { label: 'Desviación significativa del ST', points: 2 } ] },
+    { type: 'choice', id: 'a', label: '<u>A</u>ge (edad)', options: [
+      { label: '< 45', points: 0 }, { label: '45–64', points: 1 }, { label: '≥ 65', points: 2 } ] },
+    { type: 'choice', id: 'r', label: '<u>R</u>isk factors (factores de riesgo)', hint: 'HTA, dislipemia, diabetes, obesidad (IMC > 30), tabaquismo (actual o < 3 meses), antecedente familiar.', stack: true, options: [
+      { label: 'Ninguno', points: 0 },
+      { label: '1–2 factores de riesgo', points: 1 },
+      { label: '≥ 3 factores o enfermedad aterosclerótica conocida', hint: 'IAM, revascularización, ACV/AIT o enfermedad arterial periférica', points: 2 } ] },
+    { type: 'choice', id: 't', label: '<u>T</u>roponina', stack: true, options: [
+      { label: '≤ límite normal', points: 0 },
+      { label: '1 a 3 veces el límite normal', points: 1 },
+      { label: '> 3 veces el límite normal', points: 2 } ] }
+  ],
+  compute: function (v, t) {
+    var miss = ['h', 'e', 'a', 'r', 't'].filter(function (k) { return v[k] == null; }).length;
+    if (miss) return { incomplete: 'Faltan ' + miss + ' de 5 ítems.' };
+    var cat = t <= 3 ? 0 : t <= 6 ? 1 : 2;
+    return {
+      value: t, unit: '/ 10',
+      label: ['Riesgo bajo', 'Riesgo moderado', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'high'][cat],
+      row: cat,
+      detail: [
+        'MACE a 6 semanas: <b>0,9–1,7%</b>. Candidato a alta temprana con seguimiento ambulatorio.',
+        'MACE a 6 semanas: <b>12–16,6%</b>. Observación clínica, troponinas seriadas y estudios complementarios.',
+        'MACE a 6 semanas: <b>50–65%</b>. Considerar estrategia invasiva temprana.'
+      ][cat]
+    };
+  },
+  scale: { min: 0, max: 10, bands: [{ to: 3.5, level: 'low' }, { to: 6.5, level: 'mid' }, { to: 10, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Riesgo', 'MACE a 6 semanas', 'Conducta sugerida'],
+    rows: [['0–3', 'Bajo', '0,9–1,7%', 'Alta temprana'], ['4–6', 'Moderado', '12–16,6%', 'Observación y estudios'], ['7–10', 'Alto', '50–65%', 'Estrategia invasiva temprana']]
+  },
+  notes: '<p>Validado en pacientes con dolor torácico sugestivo de SCA en la guardia. No aplica a pacientes con IAMCEST.</p>',
+  refs: [
+    'Six AJ, Backus BE, Kelder JC. Chest pain in the emergency room: value of the HEART score. Neth Heart J. 2008;16:191-6.',
+    'Backus BE, et al. A prospective validation of the HEART score for chest pain patients at the emergency department. Int J Cardiol. 2013;168:2153-8.'
+  ]
+});
+</script>
+</body>
+</html>

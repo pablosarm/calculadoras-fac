@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ARC-HBR · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var MAJ = { tag: 'Mayor', tagClass: 'major' }, MIN = { tag: 'Menor', tagClass: 'minor' };
+function M(id, label, hint) { return Object.assign({ type: 'check', id: 'M_' + id, label: label, hint: hint }, MAJ); }
+function m(id, label, hint) { return Object.assign({ type: 'check', id: 'm_' + id, label: label, hint: hint }, MIN); }
+FAC.calc({
+  title: 'ARC-HBR',
+  category: 'Enfermedad coronaria',
+  desc: 'Criterios del Academic Research Consortium para definir alto riesgo de sangrado en pacientes sometidos a angioplastia coronaria.',
+  fields: [
+    { type: 'section', label: 'Criterios mayores' },
+    M('oac', 'Anticoagulación oral prevista a largo plazo'),
+    M('ckd', 'Enfermedad renal crónica severa o terminal', 'TFG < 30 mL/min/1,73 m²'),
+    M('hb', 'Hemoglobina < 11 g/dL'),
+    M('bleed', 'Sangrado espontáneo que requirió internación o transfusión', 'En los últimos 6 meses, o en cualquier momento si es recurrente'),
+    M('plt', 'Plaquetopenia moderada o severa', '< 100.000/µL'),
+    M('diat', 'Diátesis hemorrágica crónica'),
+    M('liver', 'Cirrosis hepática con hipertensión portal'),
+    M('cancer', 'Cáncer activo', 'Diagnóstico o tratamiento en los últimos 12 meses (excluye cáncer de piel no melanoma)'),
+    M('ich', 'Hemorragia intracraneal previa', 'Espontánea en cualquier momento, o traumática en los últimos 12 meses'),
+    M('avm', 'Malformación arteriovenosa cerebral'),
+    M('stroke', 'ACV isquémico moderado o severo en los últimos 6 meses', 'NIHSS ≥ 5 al ingreso'),
+    M('surg', 'Cirugía mayor no diferible durante la doble antiagregación'),
+    M('recent', 'Cirugía mayor o trauma mayor reciente', 'En los 30 días previos a la angioplastia'),
+    { type: 'section', label: 'Criterios menores' },
+    m('age', 'Edad ≥ 75 años'),
+    m('ckd', 'Enfermedad renal crónica moderada', 'TFG 30–59 mL/min/1,73 m²'),
+    m('hb', 'Hemoglobina levemente disminuida', 'Hombres 11–12,9 g/dL · Mujeres 11–11,9 g/dL'),
+    m('bleed', 'Sangrado espontáneo que requirió internación o transfusión en los últimos 12 meses', 'Que no cumpla el criterio mayor'),
+    m('nsaid', 'Uso crónico de AINEs o corticoides orales'),
+    m('stroke', 'ACV isquémico previo', 'En cualquier momento, que no cumpla el criterio mayor')
+  ],
+  compute: function (v) {
+    var maj = 0, min = 0;
+    Object.keys(v).forEach(function (k) { if (v[k]) { if (k[0] === 'M') maj++; else min++; } });
+    var hbr = maj >= 1 || min >= 2;
+    return {
+      value: hbr ? 'Sí' : 'No', unit: '',
+      label: hbr ? 'Alto riesgo de sangrado' : 'Sin criterios de alto riesgo',
+      level: hbr ? 'high' : 'low',
+      detail: hbr
+        ? 'Riesgo de sangrado BARC 3 o 5 ≥ 4% al año, o de hemorragia intracraneal ≥ 1% al año. Considerar estrategias para reducir el sangrado (DAPT abreviada, IBP).'
+        : 'No cumple la definición de alto riesgo (≥ 1 criterio mayor o ≥ 2 menores).',
+      extra: [['Criterios mayores', maj], ['Criterios menores', min]]
+    };
+  },
+  notes: '<p>Se considera <b>alto riesgo de sangrado</b> con al menos <b>1 criterio mayor</b> o <b>2 criterios menores</b>.</p>',
+  refs: ['Urban P, et al. Defining high bleeding risk in patients undergoing percutaneous coronary intervention: a consensus document from the Academic Research Consortium for High Bleeding Risk. Circulation. 2019;140:240-61.']
+});
+</script>
+</body>
+</html>

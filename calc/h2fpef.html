@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>H₂FPEF · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'H₂FPEF',
+  category: 'Insuficiencia cardíaca',
+  desc: 'Estima la probabilidad de insuficiencia cardíaca con fracción de eyección preservada en pacientes con disnea de causa no aclarada.',
+  fields: [
+    { type: 'number', id: 'age', label: '<b>E</b>lder · Edad', unit: 'años', min: 18, max: 110, hint: '> 60 años: 1 punto' },
+    { type: 'number', id: 'bmi', label: '<b>H</b>eavy · IMC', unit: 'kg/m²', min: 10, max: 80, hint: '> 30 kg/m²: 2 puntos' },
+    { type: 'number', id: 'ee', label: '<b>F</b>illing · E/e′', unit: '', min: 1, max: 50, hint: '> 9: 1 punto' },
+    { type: 'number', id: 'pasp', label: '<b>P</b>ulmonary · PSAP', unit: 'mmHg', min: 5, max: 150, hint: '> 35 mmHg: 1 punto' },
+    { type: 'section', label: 'Antecedentes' },
+    { type: 'check', id: 'af', label: '<b>F</b> · Fibrilación auricular', hint: 'Paroxística o persistente', points: 3 },
+    { type: 'check', id: 'htn', label: '<b>H</b> · Hipertensión', hint: '≥ 2 fármacos antihipertensivos', points: 1 }
+  ],
+  compute: function (v, t) {
+    if ([v.age, v.bmi, v.ee, v.pasp].some(function (x) { return x == null; }))
+      return { incomplete: 'Completá edad, IMC, E/e′ y PSAP.' };
+    var s = t + (v.bmi > 30 ? 2 : 0) + (v.pasp > 35 ? 1 : 0) + (v.age > 60 ? 1 : 0) + (v.ee > 9 ? 1 : 0);
+    var y = -9.19174 + 0.0451 * v.age + 0.130755 * v.bmi + 0.0859 * v.ee + 0.051953 * v.pasp + 1.69968 * (v.af ? 1 : 0);
+    var p = 1 / (1 + Math.exp(-y)) * 100;
+    var cat = s <= 1 ? 0 : s <= 5 ? 1 : 2;
+    return {
+      value: s, unit: '/ 9',
+      label: ['Probabilidad baja', 'Probabilidad intermedia', 'Probabilidad alta'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat,
+      detail: [
+        'ICFEp poco probable. Considerar otras causas de disnea.',
+        'Probabilidad intermedia: considerar estudios adicionales (eco-estrés diastólico, péptidos natriuréticos o cateterismo con ejercicio).',
+        'ICFEp probable (> 90%).'
+      ][cat],
+      extra: [['Probabilidad (modelo continuo)', FAC.fmt(p, 0) + '%']]
+    };
+  },
+  scale: { min: 0, max: 9, bands: [{ to: 1.5, level: 'low' }, { to: 5.5, level: 'mid' }, { to: 9, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Probabilidad de ICFEp', 'Conducta'],
+    rows: [['0–1', 'Baja', 'Buscar otras causas'], ['2–5', 'Intermedia', 'Estudios adicionales'], ['6–9', 'Alta', 'ICFEp probable']]
+  },
+  notes: '<p>La probabilidad del modelo continuo usa edad, IMC, E/e′, PSAP y fibrilación auricular según la publicación original.</p>',
+  refs: ['Reddy YNV, et al. A simple, evidence-based approach to help guide diagnosis of heart failure with preserved ejection fraction. Circulation. 2018;138:861-70.']
+});
+</script>
+</body>
+</html>

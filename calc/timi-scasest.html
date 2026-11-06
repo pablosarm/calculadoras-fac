@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TIMI (SCASEST) · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var RISK = ['4,7%', '4,7%', '8,3%', '13,2%', '19,9%', '26,2%', '40,9%', '40,9%'];
+FAC.calc({
+  title: 'TIMI (SCASEST)',
+  category: 'Enfermedad coronaria',
+  desc: 'Estima el riesgo de muerte, (re)infarto o revascularización urgente a 14 días en angina inestable o IAM sin elevación del ST.',
+  fields: [
+    { type: 'check', id: 'age', label: 'Edad ≥ 65 años', points: 1 },
+    { type: 'check', id: 'rf', label: '≥ 3 factores de riesgo coronario', hint: 'HTA, dislipemia, diabetes, tabaquismo, antecedente familiar', points: 1 },
+    { type: 'check', id: 'cad', label: 'Enfermedad coronaria conocida', hint: 'Estenosis ≥ 50%', points: 1 },
+    { type: 'check', id: 'asa', label: 'Uso de aspirina en los últimos 7 días', points: 1 },
+    { type: 'check', id: 'angina', label: 'Angina severa reciente', hint: '≥ 2 episodios en las últimas 24 h', points: 1 },
+    { type: 'check', id: 'st', label: 'Desviación del ST ≥ 0,5 mm', points: 1 },
+    { type: 'check', id: 'mk', label: 'Marcadores de necrosis positivos', points: 1 }
+  ],
+  compute: function (v, t) {
+    var lvl = t <= 2 ? 'low' : t <= 4 ? 'mid' : 'high';
+    return {
+      value: t, unit: '/ 7',
+      label: lvl === 'low' ? 'Riesgo bajo' : lvl === 'mid' ? 'Riesgo intermedio' : 'Riesgo alto',
+      level: lvl,
+      row: t <= 1 ? 0 : t >= 6 ? 5 : t - 1,
+      detail: 'Muerte, IAM o revascularización urgente a 14 días: <b>' + RISK[t] + '</b>.'
+    };
+  },
+  scale: { min: 0, max: 7, bands: [{ to: 2.5, level: 'low' }, { to: 4.5, level: 'mid' }, { to: 7, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Eventos a 14 días'],
+    rows: [['0–1', '4,7%'], ['2', '8,3%'], ['3', '13,2%'], ['4', '19,9%'], ['5', '26,2%'], ['6–7', '40,9%']]
+  },
+  refs: ['Antman EM, et al. The TIMI risk score for unstable angina/non-ST elevation MI. JAMA. 2000;284:835-42.']
+});
+</script>
+</body>
+</html>

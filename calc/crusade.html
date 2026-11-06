@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CRUSADE · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'CRUSADE',
+  category: 'Enfermedad coronaria',
+  desc: 'Estima el riesgo de sangrado mayor intrahospitalario en pacientes con SCA sin elevación del ST.',
+  fields: [
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Masculino', value: 'm', points: 0 }, { label: 'Femenino', value: 'f', points: 8 }] },
+    { type: 'section', label: 'Datos al ingreso' },
+    { type: 'number', id: 'hto', label: 'Hematocrito', unit: '%', min: 10, max: 70 },
+    { type: 'number', id: 'hr', label: 'Frecuencia cardíaca', unit: 'lpm', min: 20, max: 300 },
+    { type: 'number', id: 'sbp', label: 'Presión arterial sistólica', unit: 'mmHg', min: 40, max: 300 },
+    { type: 'section', label: 'Clearance de creatinina', hint: 'Se calcula con Cockcroft-Gault' },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 18, max: 110 },
+    { type: 'number', id: 'kg', label: 'Peso', unit: 'kg', min: 25, max: 300 },
+    { type: 'number', id: 'cr', label: 'Creatinina', unit: 'mg/dL', min: 0.1, max: 20 },
+    { type: 'section', label: 'Antecedentes' },
+    { type: 'check', id: 'hf', label: 'Signos de insuficiencia cardíaca al ingreso', points: 7 },
+    { type: 'check', id: 'vasc', label: 'Enfermedad vascular previa', hint: 'Enfermedad arterial periférica o ACV previo', points: 6 },
+    { type: 'check', id: 'dm', label: 'Diabetes', points: 6 }
+  ],
+  compute: function (v, t) {
+    if (v.sex == null || [v.hto, v.hr, v.sbp, v.age, v.kg, v.cr].some(function (x) { return x == null; }))
+      return { incomplete: 'Completá sexo, hematocrito, FC, PAS, edad, peso y creatinina.' };
+    var crcl = FAC.cockcroft(v.age, v.kg, v.cr, v.sex === 'f');
+    var ph = FAC.band(v.hto, [[31, 9], [34, 7], [37, 3], [40, 2], [0, 0]]);
+    var pc = crcl <= 15 ? 39 : crcl <= 30 ? 35 : crcl <= 60 ? 28 : crcl <= 90 ? 17 : crcl <= 120 ? 7 : 0;
+    var pf = v.hr <= 70 ? 0 : v.hr <= 80 ? 1 : v.hr <= 90 ? 3 : v.hr <= 100 ? 6 : v.hr <= 110 ? 8 : v.hr <= 120 ? 10 : 11;
+    var pp = v.sbp <= 90 ? 10 : v.sbp <= 100 ? 8 : v.sbp <= 120 ? 5 : v.sbp <= 180 ? 1 : v.sbp <= 200 ? 3 : 5;
+    var s = t + ph + pc + pf + pp;
+    var cat = s <= 20 ? 0 : s <= 30 ? 1 : s <= 40 ? 2 : s <= 50 ? 3 : 4;
+    return {
+      value: s, unit: 'puntos',
+      label: ['Riesgo muy bajo', 'Riesgo bajo', 'Riesgo moderado', 'Riesgo alto', 'Riesgo muy alto'][cat],
+      level: ['low', 'low', 'mid', 'high', 'high'][cat],
+      row: cat,
+      detail: 'Sangrado mayor intrahospitalario: <b>' + ['3,1%', '5,5%', '8,6%', '11,9%', '19,5%'][cat] + '</b>.',
+      extra: [['Clearance (Cockcroft-Gault)', FAC.fmt(crcl, 0) + ' mL/min'], ['Hematocrito', ph + ' pts'], ['Clearance', pc + ' pts'], ['Frecuencia cardíaca', pf + ' pts'], ['PAS', pp + ' pts'], ['Sexo y antecedentes', t + ' pts']]
+    };
+  },
+  scale: { min: 0, max: 100, bands: [{ to: 30, level: 'low' }, { to: 40, level: 'mid' }, { to: 100, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Riesgo', 'Sangrado mayor'],
+    rows: [['≤ 20', 'Muy bajo', '3,1%'], ['21–30', 'Bajo', '5,5%'], ['31–40', 'Moderado', '8,6%'], ['41–50', 'Alto', '11,9%'], ['> 50', 'Muy alto', '19,5%']]
+  },
+  refs: ['Subherwal S, et al. Baseline risk of major bleeding in non-ST-segment-elevation myocardial infarction: the CRUSADE Bleeding Score. Circulation. 2009;119:1873-82.']
+});
+</script>
+</body>
+</html>

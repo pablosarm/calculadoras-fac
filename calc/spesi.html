@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PESI simplificado · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'PESI simplificado (sPESI)',
+  category: 'Tromboembolismo pulmonar',
+  desc: 'Versión simplificada del PESI para estimar la mortalidad a 30 días en TEP confirmado.',
+  fields: [
+    { type: 'check', id: 'age', label: 'Edad > 80 años', points: 1 },
+    { type: 'check', id: 'ca', label: 'Cáncer', points: 1 },
+    { type: 'check', id: 'cp', label: 'Insuficiencia cardíaca o enfermedad pulmonar crónica', points: 1 },
+    { type: 'check', id: 'hr', label: 'Frecuencia cardíaca ≥ 110 lpm', points: 1 },
+    { type: 'check', id: 'sbp', label: 'PAS < 100 mmHg', points: 1 },
+    { type: 'check', id: 'sat', label: 'Saturación arterial de O₂ < 90%', points: 1 }
+  ],
+  compute: function (v, t) {
+    var low = t === 0;
+    return {
+      value: t, unit: '/ 6',
+      label: low ? 'Riesgo bajo' : 'Riesgo no bajo',
+      level: low ? 'low' : 'high', row: low ? 0 : 1,
+      detail: low
+        ? 'Mortalidad a 30 días ≈ <b>1,0%</b>. Candidato a manejo ambulatorio o alta temprana si no hay otros criterios de riesgo.'
+        : 'Mortalidad a 30 días ≈ <b>10,9%</b>. Riesgo al menos intermedio: evaluar función del VD (eco/TC) y troponina para definir intermedio-bajo vs. intermedio-alto.'
+    };
+  },
+  scale: { min: 0, max: 6, bands: [{ to: 0.5, level: 'low' }, { to: 6, level: 'high' }] },
+  table: { head: ['Puntaje', 'Riesgo', 'Mortalidad a 30 días'], rows: [['0', 'Bajo', '≈ 1,0%'], ['≥ 1', 'No bajo', '≈ 10,9%']] },
+  refs: [
+    'Jiménez D, et al. Simplification of the pulmonary embolism severity index for prognostication in patients with acute symptomatic pulmonary embolism. Arch Intern Med. 2010;170:1383-9.',
+    'Konstantinides SV, et al. 2019 ESC Guidelines for the diagnosis and management of acute pulmonary embolism. Eur Heart J. 2020;41:543-603.'
+  ]
+});
+</script>
+</body>
+</html>

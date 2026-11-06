@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HAS-BLED · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'HAS-BLED',
+  category: 'Fibrilación auricular',
+  desc: 'Estima el riesgo de sangrado mayor a 1 año en pacientes con fibrilación auricular anticoagulados.',
+  fields: [
+    { type: 'check', id: 'h', label: '<b>H</b> · Hipertensión no controlada', hint: 'PAS > 160 mmHg', points: 1 },
+    { type: 'check', id: 'ar', label: '<b>A</b> · Función renal anormal', hint: 'Diálisis, trasplante renal o creatinina > 2,26 mg/dL', points: 1 },
+    { type: 'check', id: 'al', label: '<b>A</b> · Función hepática anormal', hint: 'Cirrosis, o bilirrubina > 2× y transaminasas > 3× el límite normal', points: 1 },
+    { type: 'check', id: 's', label: '<b>S</b> · ACV previo', points: 1 },
+    { type: 'check', id: 'b', label: '<b>B</b> · Sangrado previo o predisposición', hint: 'Sangrado mayor, anemia o plaquetopenia', points: 1 },
+    { type: 'check', id: 'l', label: '<b>L</b> · RIN lábil', hint: 'Tiempo en rango terapéutico < 60% (solo con antagonistas de vitamina K)', points: 1 },
+    { type: 'check', id: 'e', label: '<b>E</b> · Edad > 65 años', points: 1 },
+    { type: 'check', id: 'dd', label: '<b>D</b> · Fármacos', hint: 'Antiagregantes o AINEs', points: 1 },
+    { type: 'check', id: 'da', label: '<b>D</b> · Alcohol', hint: '≥ 8 tragos por semana', points: 1 }
+  ],
+  compute: function (v, t) {
+    var cat = t <= 1 ? 0 : t === 2 ? 1 : 2;
+    return {
+      value: t, unit: '/ 9',
+      label: ['Riesgo bajo', 'Riesgo moderado', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat,
+      detail: cat === 2
+        ? 'Alto riesgo de sangrado: corregir factores modificables y realizar un seguimiento más estrecho. Un puntaje alto no contraindica por sí solo la anticoagulación.'
+        : 'Corregir los factores de riesgo modificables (HTA, fármacos, alcohol, RIN lábil).'
+    };
+  },
+  scale: { min: 0, max: 9, bands: [{ to: 1.5, level: 'low' }, { to: 2.5, level: 'mid' }, { to: 9, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Riesgo de sangrado'],
+    rows: [['0–1', 'Bajo'], ['2', 'Moderado'], ['≥ 3', 'Alto']]
+  },
+  refs: [
+    'Pisters R, et al. A novel user-friendly score (HAS-BLED) to assess 1-year risk of major bleeding in patients with atrial fibrillation. Chest. 2010;138:1093-1100.',
+    'Van Gelder IC, et al. 2024 ESC Guidelines for the management of atrial fibrillation. Eur Heart J. 2024;45:3314-3414.'
+  ]
+});
+</script>
+</body>
+</html>

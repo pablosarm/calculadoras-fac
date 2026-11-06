@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Índice cintura-talla · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'Índice cintura-talla',
+  category: 'Cardiometabolismo',
+  desc: 'ICT = circunferencia de cintura / talla. Marcador simple de adiposidad central y riesgo cardiometabólico.',
+  fields: [
+    { type: 'number', id: 'waist', label: 'Circunferencia de cintura', unit: 'cm', min: 30, max: 250, hint: 'Medida en el punto medio entre la última costilla y la cresta ilíaca' },
+    { type: 'number', id: 'cm', label: 'Talla', unit: 'cm', min: 50, max: 250 }
+  ],
+  compute: function (v) {
+    if (v.waist == null || v.cm == null) return { incomplete: 'Ingresá cintura y talla.' };
+    var r = v.waist / v.cm;
+    var i = r < 0.5 ? 0 : r < 0.6 ? 1 : 2;
+    return {
+      value: FAC.fmt(r, 2), score: r, unit: '',
+      label: ['Sin riesgo aumentado', 'Riesgo aumentado', 'Riesgo alto'][i],
+      level: ['low', 'mid', 'high'][i], row: i,
+      detail: 'Objetivo práctico: mantener la cintura por debajo de la mitad de la talla (< ' + FAC.fmt(v.cm / 2, 0) + ' cm).'
+    };
+  },
+  scale: { min: 0.35, max: 0.8, bands: [{ to: 0.5, level: 'low' }, { to: 0.6, level: 'mid' }, { to: 0.8, level: 'high' }] },
+  table: { head: ['ICT', 'Riesgo cardiometabólico'], rows: [['< 0,50', 'Sin riesgo aumentado'], ['0,50–0,59', 'Aumentado'], ['≥ 0,60', 'Alto']] },
+  refs: [
+    'Ashwell M, Gunn P, Gibson S. Waist-to-height ratio is a better screening tool than waist circumference and BMI for adult cardiometabolic risk factors: systematic review and meta-analysis. Obes Rev. 2012;13:275-86.',
+    'NICE guideline NG246. Overweight and obesity management. 2025.'
+  ]
+});
+</script>
+</body>
+</html>

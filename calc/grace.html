@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GRACE · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'GRACE',
+  category: 'Enfermedad coronaria',
+  desc: 'Estima la mortalidad intrahospitalaria en pacientes con síndrome coronario agudo (con y sin elevación del ST).',
+  fields: [
+    { type: 'choice', id: 'tipo', label: 'Tipo de SCA', default: 0, options: [
+      { label: 'SCASEST', value: 'nste' }, { label: 'IAMCEST', value: 'ste' } ] },
+    { type: 'section', label: 'Datos al ingreso' },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 18, max: 110 },
+    { type: 'number', id: 'hr', label: 'Frecuencia cardíaca', unit: 'lpm', min: 20, max: 300 },
+    { type: 'number', id: 'sbp', label: 'Presión arterial sistólica', unit: 'mmHg', min: 40, max: 300 },
+    { type: 'number', id: 'cr', label: 'Creatinina', unit: 'mg/dL', min: 0.1, max: 20 },
+    { type: 'choice', id: 'killip', label: 'Clase Killip', default: 0, options: [
+      { label: 'I', points: 0 }, { label: 'II', points: 20 }, { label: 'III', points: 39 }, { label: 'IV', points: 59 } ] },
+    { type: 'section', label: 'Hallazgos' },
+    { type: 'check', id: 'arrest', label: 'Paro cardíaco al ingreso', points: 39 },
+    { type: 'check', id: 'st', label: 'Desviación del segmento ST', points: 28 },
+    { type: 'check', id: 'enz', label: 'Marcadores de necrosis elevados', hint: 'Troponina o CK-MB', points: 14 }
+  ],
+  compute: function (v, t) {
+    if ([v.age, v.hr, v.sbp, v.cr].some(function (x) { return x == null; }))
+      return { incomplete: 'Ingresá edad, frecuencia cardíaca, presión sistólica y creatinina.' };
+    var pa = FAC.band(v.age, [[30, 0], [40, 8], [50, 25], [60, 41], [70, 58], [80, 75], [90, 91], [0, 100]]);
+    var ph = FAC.band(v.hr, [[50, 0], [70, 3], [90, 9], [110, 15], [150, 24], [200, 38], [0, 46]]);
+    var ps = FAC.band(v.sbp, [[80, 58], [100, 53], [120, 43], [140, 34], [160, 24], [200, 10], [0, 0]]);
+    var pc = FAC.band(v.cr, [[0.4, 1], [0.8, 4], [1.2, 7], [1.6, 10], [2, 13], [4, 21], [0, 28]]);
+    var s = t + pa + ph + ps + pc;
+    var ste = v.tipo === 'ste';
+    var lo = ste ? 125 : 108, hi = ste ? 154 : 140;
+    var cat = s <= lo ? 0 : s <= hi ? 1 : 2;
+    var mort = ste ? ['< 2%', '2–5%', '> 5%'] : ['< 1%', '1–3%', '> 3%'];
+    var detail = 'Mortalidad intrahospitalaria estimada: <b>' + mort[cat] + '</b>.';
+    if (!ste && s > 140) detail += '<br>Score > 140: criterio de alto riesgo; las guías ESC sugieren estrategia invasiva temprana (< 24 h).';
+    return {
+      value: s, unit: 'puntos',
+      label: ['Riesgo bajo', 'Riesgo intermedio', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'high'][cat],
+      detail: detail,
+      row: (ste ? 3 : 0) + cat,
+      extra: [['Edad', pa + ' pts'], ['Frecuencia cardíaca', ph + ' pts'], ['PAS', ps + ' pts'], ['Creatinina', pc + ' pts'], ['Killip y hallazgos', t + ' pts']]
+    };
+  },
+  scale: function (v) {
+    return v.tipo === 'ste'
+      ? { min: 0, max: 260, bands: [{ to: 125, level: 'low' }, { to: 154, level: 'mid' }, { to: 260, level: 'high' }] }
+      : { min: 0, max: 260, bands: [{ to: 108, level: 'low' }, { to: 140, level: 'mid' }, { to: 260, level: 'high' }] };
+  },
+  table: {
+    head: ['SCA', 'Puntaje', 'Riesgo', 'Mortalidad intrahospitalaria'],
+    rows: [
+      ['SCASEST', '≤ 108', 'Bajo', '< 1%'], ['SCASEST', '109–140', 'Intermedio', '1–3%'], ['SCASEST', '> 140', 'Alto', '> 3%'],
+      ['IAMCEST', '≤ 125', 'Bajo', '< 2%'], ['IAMCEST', '126–154', 'Intermedio', '2–5%'], ['IAMCEST', '> 154', 'Alto', '> 5%']
+    ]
+  },
+  notes: '<p>Corresponde al score GRACE original de mortalidad intrahospitalaria. Debe calcularse con los datos de la presentación inicial.</p>',
+  refs: [
+    'Granger CB, et al. Predictors of hospital mortality in the Global Registry of Acute Coronary Events. Arch Intern Med. 2003;163:2345-53.',
+    'Byrne RA, et al. 2023 ESC Guidelines for the management of acute coronary syndromes. Eur Heart J. 2023;44:3720-3826.'
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CHA₂DS₂-VA · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'CHA₂DS₂-VA',
+  category: 'Fibrilación auricular',
+  desc: 'Estima el riesgo tromboembólico en la fibrilación auricular y orienta la indicación de anticoagulación oral (ESC 2024, sin el criterio de sexo).',
+  fields: [
+    { type: 'choice', id: 'age', label: '<b>A</b>ge (edad)', options: [
+      { label: '< 65', points: 0 }, { label: '65–74', points: 1 }, { label: '≥ 75', points: 2 } ] },
+    { type: 'section', label: 'Antecedentes' },
+    { type: 'check', id: 'c', label: '<b>C</b> · Insuficiencia cardíaca', hint: 'Signos/síntomas de IC o FEVI reducida, independientemente de la FE', points: 1 },
+    { type: 'check', id: 'h', label: '<b>H</b> · Hipertensión arterial', hint: 'O tratamiento antihipertensivo', points: 1 },
+    { type: 'check', id: 'd', label: '<b>D</b> · Diabetes', points: 1 },
+    { type: 'check', id: 's', label: '<b>S₂</b> · ACV, AIT o tromboembolismo previo', points: 2 },
+    { type: 'check', id: 'v', label: '<b>V</b> · Enfermedad vascular', hint: 'IAM previo, enfermedad arterial periférica o placa aórtica', points: 1 }
+  ],
+  compute: function (v, t) {
+    if (v.age == null) return { incomplete: 'Seleccioná el rango de edad.' };
+    var cat = t === 0 ? 0 : t === 1 ? 1 : 2;
+    return {
+      value: t, unit: '/ 8',
+      label: ['Riesgo bajo', 'Riesgo intermedio', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat,
+      detail: [
+        'No se recomienda anticoagulación oral para prevención de ACV.',
+        'Se debe considerar anticoagulación oral (clase IIa).',
+        'Se recomienda anticoagulación oral (clase I), preferentemente con anticoagulantes directos.'
+      ][cat]
+    };
+  },
+  scale: { min: 0, max: 8, bands: [{ to: 0.5, level: 'low' }, { to: 1.5, level: 'mid' }, { to: 8, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Recomendación (ESC 2024)'],
+    rows: [['0', 'No anticoagular'], ['1', 'Considerar anticoagulación (IIa)'], ['≥ 2', 'Anticoagulación recomendada (I)']]
+  },
+  notes: '<p>El CHA₂DS₂-VA omite el sexo femenino como factor de riesgo. Evaluar también el riesgo de sangrado (HAS-BLED) para corregir factores modificables, no para contraindicar la anticoagulación.</p>',
+  refs: ['Van Gelder IC, et al. 2024 ESC Guidelines for the management of atrial fibrillation. Eur Heart J. 2024;45:3314-3414.']
+});
+</script>
+</body>
+</html>

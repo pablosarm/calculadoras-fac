@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DAPT · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'DAPT',
+  category: 'Enfermedad coronaria',
+  desc: 'En pacientes que completaron 12 meses de doble antiagregación sin eventos, estima el balance beneficio/riesgo de prolongarla.',
+  fields: [
+    { type: 'choice', id: 'age', label: 'Edad', options: [
+      { label: '< 65', points: 0 }, { label: '65–74', points: -1 }, { label: '≥ 75', points: -2 } ] },
+    { type: 'section', label: 'Características clínicas' },
+    { type: 'check', id: 'smk', label: 'Tabaquismo actual', hint: 'O en el último año', points: 1 },
+    { type: 'check', id: 'dm', label: 'Diabetes', points: 1 },
+    { type: 'check', id: 'mi', label: 'IAM como presentación índice', points: 1 },
+    { type: 'check', id: 'prior', label: 'Angioplastia o IAM previos', points: 1 },
+    { type: 'check', id: 'hf', label: 'Insuficiencia cardíaca o FEVI < 30%', points: 2 },
+    { type: 'section', label: 'Características del procedimiento' },
+    { type: 'check', id: 'ptx', label: 'Stent liberador de paclitaxel', points: 1 },
+    { type: 'check', id: 'diam', label: 'Diámetro del stent < 3 mm', points: 1 },
+    { type: 'check', id: 'svg', label: 'Angioplastia de puente venoso', points: 2 }
+  ],
+  compute: function (v, t) {
+    if (v.age == null) return { incomplete: 'Seleccioná el rango de edad.' };
+    var fav = t >= 2;
+    return {
+      value: t, unit: 'puntos',
+      label: fav ? 'Favorece DAPT prolongada' : 'No favorece DAPT prolongada',
+      level: fav ? 'info' : 'mid', row: fav ? 1 : 0,
+      detail: fav
+        ? 'Beneficio isquémico mayor que el riesgo de sangrado al prolongar la doble antiagregación más allá de 12 meses.'
+        : 'El riesgo de sangrado supera el beneficio isquémico de prolongar la doble antiagregación.'
+    };
+  },
+  scale: { min: -2, max: 10, bands: [{ to: 2, level: 'mid' }, { to: 10, level: 'info' }] },
+  table: {
+    head: ['Puntaje', 'Interpretación'],
+    rows: [['< 2', 'Balance desfavorable para DAPT prolongada'], ['≥ 2', 'Balance favorable para DAPT prolongada']]
+  },
+  refs: ['Yeh RW, et al. Development and validation of a prediction rule for benefit and harm of dual antiplatelet therapy beyond 1 year after percutaneous coronary intervention. JAMA. 2016;315:1735-49.']
+});
+</script>
+</body>
+</html>

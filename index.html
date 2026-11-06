@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calculadoras FAC</title>
+<link rel="stylesheet" href="assets/fac.css">
+</head>
+<body>
+<script src="assets/fac.js"></script>
+<script src="assets/registry.js"></script>
+<div id="top"></div>
+<main class="wrap">
+  <section class="hero">
+    <h1>Calculadoras</h1>
+    <p>Scores y fórmulas de uso diario, rápidos y sin vueltas.</p>
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Buscar: GRACE, sangrado, TEP, LDL…" autocomplete="off">
+    </label>
+  </section>
+  <nav class="filters" id="filters"></nav>
+  <div id="list"></div>
+  <p class="none" id="none">No encontramos calculadoras con esa búsqueda.</p>
+  <p class="disclaimer">Herramienta de apoyo a la decisión clínica. No reemplaza el juicio médico.</p>
+</main>
+<script>
+(function () {
+  document.getElementById('top').outerHTML = FAC.header(false);
+  var cats = window.FAC_CATEGORIES, calcs = window.FAC_CALCS, active = 'all';
+  var norm = function (s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/₂/g, '2'); };
+
+  var f = '<button data-c="all" class="on">Todas</button>' +
+    cats.map(function (c) { return '<button data-c="' + c.id + '">' + c.name + '</button>'; }).join('');
+  var filters = document.getElementById('filters');
+  filters.innerHTML = f;
+  filters.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    active = b.dataset.c;
+    filters.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    draw();
+  });
+
+  var q = document.getElementById('q');
+  q.addEventListener('input', draw);
+
+  function draw() {
+    var term = norm(q.value.trim()), html = '', count = 0;
+    cats.forEach(function (c) {
+      if (active !== 'all' && active !== c.id) return;
+      var items = calcs.filter(function (x) {
+        return x.cat === c.id && (!term || norm(x.title + ' ' + x.desc + ' ' + x.kw + ' ' + c.name).indexOf(term) > -1);
+      });
+      if (!items.length) return;
+      count += items.length;
+      html += '<section class="cat"><div class="cat-head"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + c.icon + '</svg></span>' +
+        '<h2>' + c.name + '</h2><span>' + items.length + '</span></div><div class="cards">' +
+        items.map(function (x) { return '<a class="card" href="calc/' + x.file + '"><b>' + x.title + '</b><span>' + x.desc + '</span></a>'; }).join('') +
+        '</div></section>';
+    });
+    document.getElementById('list').innerHTML = html;
+    document.getElementById('none').style.display = count ? 'none' : 'block';
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

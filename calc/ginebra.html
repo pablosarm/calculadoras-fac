@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ginebra revisado · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+FAC.calc({
+  title: 'Ginebra revisado',
+  category: 'Tromboembolismo pulmonar',
+  desc: 'Estima la probabilidad clínica pretest de tromboembolismo pulmonar con variables objetivas.',
+  fields: [
+    { type: 'choice', id: 'hr', label: 'Frecuencia cardíaca', options: [
+      { label: '< 75 lpm', points: 0 }, { label: '75–94 lpm', points: 3 }, { label: '≥ 95 lpm', points: 5 } ] },
+    { type: 'section', label: 'Factores de riesgo' },
+    { type: 'check', id: 'age', label: 'Edad > 65 años', points: 1 },
+    { type: 'check', id: 'prev', label: 'TVP o TEP previos', points: 3 },
+    { type: 'check', id: 'surg', label: 'Cirugía con anestesia general o fractura de miembro inferior', hint: 'En el último mes', points: 2 },
+    { type: 'check', id: 'ca', label: 'Cáncer activo', hint: 'Sólido o hematológico, activo o curado hace < 1 año', points: 2 },
+    { type: 'section', label: 'Síntomas y signos' },
+    { type: 'check', id: 'pain', label: 'Dolor unilateral en miembro inferior', points: 3 },
+    { type: 'check', id: 'hemo', label: 'Hemoptisis', points: 2 },
+    { type: 'check', id: 'palp', label: 'Dolor a la palpación venosa profunda y edema unilateral', points: 4 }
+  ],
+  compute: function (v, t) {
+    if (v.hr == null) return { incomplete: 'Seleccioná la frecuencia cardíaca.' };
+    var cat = t <= 3 ? 0 : t <= 10 ? 1 : 2;
+    return {
+      value: t, unit: 'puntos',
+      label: ['Probabilidad baja', 'Probabilidad intermedia', 'Probabilidad alta'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat,
+      detail: [
+        'Prevalencia de TEP ≈ 8%. Solicitar dímero D; si es negativo, se descarta TEP.',
+        'Prevalencia de TEP ≈ 28%. Solicitar dímero D; si es positivo, angiotomografía pulmonar.',
+        'Prevalencia de TEP ≈ 74%. Angiotomografía pulmonar directamente (sin dímero D).'
+      ][cat],
+      extra: [['Esquema de dos niveles', t <= 5 ? 'TEP improbable (≤ 5)' : 'TEP probable (≥ 6)']]
+    };
+  },
+  scale: { min: 0, max: 22, bands: [{ to: 3.5, level: 'low' }, { to: 10.5, level: 'mid' }, { to: 22, level: 'high' }] },
+  table: {
+    head: ['Puntaje', 'Probabilidad clínica', 'Prevalencia de TEP'],
+    rows: [['0–3', 'Baja', '≈ 8%'], ['4–10', 'Intermedia', '≈ 28%'], ['≥ 11', 'Alta', '≈ 74%']]
+  },
+  notes: '<p>En pacientes con baja probabilidad, considerar el dímero D ajustado por edad (edad × 10 µg/L en mayores de 50 años).</p>',
+  refs: [
+    'Le Gal G, et al. Prediction of pulmonary embolism in the emergency department: the revised Geneva score. Ann Intern Med. 2006;144:165-71.',
+    'Konstantinides SV, et al. 2019 ESC Guidelines for the diagnosis and management of acute pulmonary embolism. Eur Heart J. 2020;41:543-603.'
+  ]
+});
+</script>
+</body>
+</html>

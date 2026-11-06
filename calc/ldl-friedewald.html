@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LDL (Friedewald) · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css"></head>
+<body>
+<script src="../assets/fac.js"></script>
+<script>
+var GOALS = [['Muy alto', 55], ['Alto', 70], ['Moderado', 100], ['Bajo', 116]];
+FAC.calc({
+  title: 'LDL (Friedewald)',
+  category: 'Cardiometabolismo',
+  desc: 'LDL = colesterol total − HDL − triglicéridos / 5 (en mg/dL). También calcula el colesterol no-HDL.',
+  fields: [
+    { type: 'number', id: 'ct', label: 'Colesterol total', unit: 'mg/dL', min: 50, max: 1000 },
+    { type: 'number', id: 'hdl', label: 'Colesterol HDL', unit: 'mg/dL', min: 5, max: 200 },
+    { type: 'number', id: 'tg', label: 'Triglicéridos', unit: 'mg/dL', min: 10, max: 5000 },
+    { type: 'choice', id: 'risk', label: 'Riesgo cardiovascular (opcional, para ver la meta)', hidePoints: true, options: GOALS.map(function (g) { return { label: g[0] }; }) }
+  ],
+  compute: function (v) {
+    if (v.ct == null || v.hdl == null || v.tg == null) return { incomplete: 'Ingresá colesterol total, HDL y triglicéridos.' };
+    var nohdl = v.ct - v.hdl;
+    var extra = [['Colesterol no-HDL', FAC.fmt(nohdl, 0) + ' mg/dL']];
+    if (v.tg >= 400) return {
+      value: 'N/A', unit: '', label: 'Fórmula no válida', level: 'high',
+      detail: 'Con triglicéridos ≥ 400 mg/dL la fórmula de Friedewald no es válida. Solicitar LDL directo o usar el colesterol no-HDL.',
+      extra: extra
+    };
+    var ldl = v.ct - v.hdl - v.tg / 5;
+    extra.unshift(['LDL en mmol/L', FAC.fmt(ldl / 38.67, 2)]);
+    var detail = '', lvl = 'info', label = 'LDL calculado', row;
+    if (v.risk != null) {
+      var g = GOALS[v.risk], ok = ldl < g[1];
+      row = v.risk;
+      label = ok ? 'En meta' : 'Fuera de meta';
+      lvl = ok ? 'low' : 'high';
+      detail = 'Meta para riesgo ' + g[0].toLowerCase() + ': LDL < ' + g[1] + ' mg/dL' + (v.risk <= 1 ? ' y reducción ≥ 50% del basal' : '') + '.';
+      if (!ok) extra.push(['Reducción necesaria', FAC.fmt((1 - g[1] / ldl) * 100, 0) + '%']);
+    }
+    if (v.tg >= 150 || ldl < 70) detail += (detail ? '<br>' : '') + '<small style="color:var(--muted)">Con triglicéridos elevados o LDL bajo, Friedewald subestima el LDL; considerar LDL directo o la fórmula de Martin-Hopkins.</small>';
+    return { value: FAC.fmt(ldl, 0), score: ldl, unit: 'mg/dL', label: label, level: lvl, row: row, detail: detail, extra: extra };
+  },
+  table: {
+    title: 'Metas de LDL (ESC/EAS 2019)',
+    head: ['Riesgo cardiovascular', 'Meta de LDL'],
+    rows: [['Muy alto', '< 55 mg/dL y reducción ≥ 50%'], ['Alto', '< 70 mg/dL y reducción ≥ 50%'], ['Moderado', '< 100 mg/dL'], ['Bajo', '< 116 mg/dL']]
+  },
+  refs: [
+    'Friedewald WT, Levy RI, Fredrickson DS. Estimation of the concentration of low-density lipoprotein cholesterol in plasma, without use of the preparative ultracentrifuge. Clin Chem. 1972;18:499-502.',
+    'Mach F, et al. 2019 ESC/EAS Guidelines for the management of dyslipidaemias. Eur Heart J. 2020;41:111-88.'
+  ]
+});
+</script>
+</body>
+</html>
