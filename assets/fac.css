@@ -108,8 +108,8 @@ button { font: inherit; }
 }
 .back:hover { background: #1e5b8d; transform: translateX(-2px); }
 .back { white-space: nowrap; flex: none; }
-.logo-img { display: block; height: 46px; width: auto; max-width: 100%; }
-@media (max-width: 520px) { .logo-img { height: 34px; } }
+.logo-img { display: block; height: 66px; width: auto; max-width: 100%; }
+@media (max-width: 520px) { .logo-img { height: 58px; } }
 /* En modo oscuro el logo va sobre una placa blanca para respetar sus colores */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .logo-img { background: #fff; padding: 6px 10px; border-radius: 12px; box-sizing: content-box; }

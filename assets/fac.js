@@ -60,7 +60,7 @@
       '<div class="strip"><span class="on">Calculadoras</span><a href="https://fac.org.ar/" target="_blank" rel="noopener">fac.org.ar</a></div>' +
       '<header class="topbar">' +
       '<a class="brand" href="' + (back ? '../index.html' : 'index.html') + '">' +
-      '<img class="logo-img" src="' + (back ? '../' : '') + 'assets/logo-fac.webp" alt="FAC · Federación Argentina de Cardiología"></a>' +
+      '<img class="logo-img" src="' + (back ? '../' : '') + 'assets/logo-salud-digital.png" alt="FAC · Secretaría de Salud Digital"></a>' +
       (back ? '<a class="back" href="../index.html">← Menú</a>' : '') +
       '</header>'
     );
