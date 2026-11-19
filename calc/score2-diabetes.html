@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SCORE2-Diabetes · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css?v=5"></head>
+<body>
+<script src="../assets/fac.js?v=5"></script>
+<script>
+/* SCORE2-Diabetes (ESC 2023). Colesterol en mmol/L, HbA1c en mmol/mol. */
+var SC = { low: { M: [-0.5699, 0.7476], F: [-0.7380, 0.7019] }, mod: { M: [-0.1565, 0.8009], F: [-0.3143, 0.7701] },
+           high: { M: [0.3207, 0.9360], F: [0.5710, 0.9369] }, vhigh: { M: [0.5836, 0.8294], F: [0.9412, 0.8329] } };
+function s2d(sex, age, sm, sbp, tc, hdl, dage, a1c, egfr, reg) {
+  var a = (age - 60) / 5, p = (sbp - 120) / 20, t = tc - 6, h = (hdl - 1.3) / 0.5, hb = (a1c - 31) / 9.34,
+      e = (Math.log(egfr) - 4.5) / 0.15, d = (dage - 50) / 5, lp, S;
+  if (sex === 'M') {
+    lp = 0.5368 * a + 0.4774 * sm + 0.1322 * p + 0.6457 + 0.1102 * t - 0.1087 * h - 0.0672 * a * sm - 0.0268 * a * p - 0.0983 * a - 0.0181 * a * t + 0.0095 * a * h
+       - 0.0998 * d + 0.0955 * hb - 0.0591 * e + 0.0058 * e * e - 0.0134 * hb * a + 0.0115 * e * a; S = 0.9605;
+  } else {
+    lp = 0.6624 * a + 0.6139 * sm + 0.1421 * p + 0.8096 + 0.1127 * t - 0.1568 * h - 0.1122 * a * sm - 0.0167 * a * p - 0.1272 * a - 0.0200 * a * t + 0.0186 * a * h
+       - 0.118 * d + 0.1173 * hb - 0.0640 * e + 0.0062 * e * e - 0.0196 * hb * a + 0.0169 * e * a; S = 0.9776;
+  }
+  var raw = 1 - Math.pow(S, Math.exp(lp)), s = SC[reg][sex];
+  return 100 * (1 - Math.exp(-Math.exp(s[0] + s[1] * Math.log(-Math.log(1 - raw)))));
+}
+
+FAC.calc({
+  title: 'SCORE2-Diabetes',
+  category: 'Riesgo cardiovascular',
+  desc: 'Riesgo a 10 años de eventos cardiovasculares fatales y no fatales en personas de 40 a 69 años con diabetes tipo 2, sin enfermedad aterosclerótica ni daño de órgano blanco grave (ESC 2023).',
+  fields: [
+    { type: 'choice', id: 'region', label: 'Región de riesgo (ESC)', default: 1, hidePoints: true, options: [
+      { label: 'Bajo', value: 'low' }, { label: 'Moderado', value: 'mod' }, { label: 'Alto', value: 'high' }, { label: 'Muy alto', value: 'vhigh' }] },
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Femenino', value: 'F' }, { label: 'Masculino', value: 'M' }] },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 40, max: 69 },
+    { type: 'number', id: 'dage', label: 'Edad al diagnóstico de diabetes', unit: 'años', min: 10, max: 69 },
+    { type: 'number', id: 'sbp', label: 'Presión arterial sistólica', unit: 'mmHg', min: 80, max: 220 },
+    { type: 'number', id: 'tc', label: 'Colesterol total', unit: 'mg/dL', min: 80, max: 500 },
+    { type: 'number', id: 'hdl', label: 'Colesterol HDL', unit: 'mg/dL', min: 10, max: 150 },
+    { type: 'number', id: 'a1c', label: 'HbA1c', unit: '%', min: 4, max: 18 },
+    { type: 'number', id: 'egfr', label: 'Filtrado glomerular estimado', unit: 'mL/min/1,73 m²', min: 5, max: 150, hint: 'Podés calcularlo en <a href="ckd-epi.html">CKD-EPI</a>' },
+    { type: 'check', id: 'smk', label: 'Tabaquismo actual' }
+  ],
+  compute: function (v) {
+    if (v.sex == null || [v.age, v.dage, v.sbp, v.tc, v.hdl, v.a1c, v.egfr].some(function (x) { return x == null; }))
+      return { incomplete: 'Completá sexo, edades, PAS, colesterol total, HDL, HbA1c y filtrado glomerular.' };
+    if (v.dage > v.age) return { incomplete: 'La edad al diagnóstico no puede ser mayor que la edad actual.' };
+    if (v.hdl >= v.tc) return { incomplete: 'El HDL debe ser menor que el colesterol total.' };
+    var mmol = (v.a1c - 2.15) * 10.929;
+    var r = s2d(v.sex, v.age, v.smk ? 1 : 0, v.sbp, v.tc / 38.67, v.hdl / 38.67, v.dage, mmol, v.egfr, v.region);
+    var cat = r < 5 ? 0 : r < 10 ? 1 : r < 20 ? 2 : 3;
+    return {
+      value: FAC.fmt(r, 1), score: r, unit: '% a 10 años',
+      label: ['Riesgo bajo', 'Riesgo moderado', 'Riesgo alto', 'Riesgo muy alto'][cat],
+      level: ['low', 'mid', 'high', 'high'][cat], row: cat,
+      detail: [
+        'Priorizar cambios en el estilo de vida y control de factores de riesgo.',
+        'Considerar estatinas y control intensivo de factores de riesgo.',
+        'Estatinas recomendadas; considerar iSGLT2 o arGLP-1 con beneficio cardiovascular demostrado.',
+        'Estatinas de alta intensidad; considerar iSGLT2 o arGLP-1 con beneficio cardiovascular demostrado.'][cat],
+      extra: [['HbA1c', FAC.fmt(mmol, 0) + ' mmol/mol'], ['Años con diabetes', FAC.fmt(v.age - v.dage, 0)]]
+    };
+  },
+  scale: { min: 0, max: 30, bands: [{ to: 5, level: 'low' }, { to: 10, level: 'mid' }, { to: 30, level: 'high' }] },
+  table: {
+    title: 'Categorías de riesgo (ESC 2023, diabetes)',
+    head: ['SCORE2-Diabetes', 'Riesgo'],
+    rows: [['< 5%', 'Bajo'], ['5 a < 10%', 'Moderado'], ['10 a < 20%', 'Alto'], ['≥ 20%', 'Muy alto']]
+  },
+  notes: '<p>Las personas con diabetes y enfermedad aterosclerótica establecida o daño de órgano blanco grave (TFG &lt; 45, TFG 45–59 con albuminuria 30–300 mg/g, albuminuria &gt; 300 mg/g o enfermedad microvascular en 3 sitios) son de muy alto riesgo sin necesidad de calcular el score.</p>',
+  refs: [
+    'SCORE2-Diabetes Working Group and the ESC Cardiovascular Risk Collaboration. SCORE2-Diabetes: 10-year cardiovascular risk estimation in type 2 diabetes in Europe. Eur Heart J. 2023;44:2544-56.',
+    'Marx N, et al. 2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes. Eur Heart J. 2023;44:4043-140.'
+  ]
+});
+</script>
+</body>
+</html>

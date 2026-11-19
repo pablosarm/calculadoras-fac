@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Calculadoras FAC</title>
-<link rel="stylesheet" href="assets/fac.css?v=3">
+<link rel="stylesheet" href="assets/fac.css?v=5">
 </head>
 <body>
-<script src="assets/fac.js?v=3"></script>
-<script src="assets/registry.js?v=3"></script>
+<script src="assets/fac.js?v=5"></script>
+<script src="assets/registry.js?v=5"></script>
 <div id="top"></div>
 <main class="wrap">
   <section class="hero">
@@ -58,7 +58,11 @@
       count += items.length;
       html += '<section class="cat"><div class="cat-head"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + c.icon + '</svg></span>' +
         '<h2>' + c.name + '</h2><span>' + items.length + '</span></div><div class="cards">' +
-        items.map(function (x) { return '<a class="card" href="calc/' + x.file + '"><b>' + x.title + '</b><span>' + x.desc + '</span></a>'; }).join('') +
+        items.map(function (x) {
+          return x.url
+            ? '<a class="card ext" href="' + x.url + '" target="_blank" rel="noopener"><b>' + x.title + '</b><span>' + x.desc + '</span><small>Calculadora oficial externa ↗</small></a>'
+            : '<a class="card" href="calc/' + x.file + '"><b>' + x.title + '</b><span>' + x.desc + '</span></a>';
+        }).join('') +
         '</div></section>';
     });
     document.getElementById('list').innerHTML = html;

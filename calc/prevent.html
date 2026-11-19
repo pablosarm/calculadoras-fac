@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PREVENT · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css?v=5"></head>
+<body>
+<script src="../assets/fac.js?v=5"></script>
+<script>
+/* Ecuaciones base PREVENT a 10 años (Khan SS et al., Circulation 2024).
+   Orden CVD/ASCVD: const, edad, noHDL, HDL, PAS<110, PAS≥110, DM, tabaco, TFG<60, TFG≥60, antiHTA, estatina,
+   antiHTA×PAS≥110, estatina×noHDL, edad×noHDL, edad×HDL, edad×PAS≥110, edad×DM, edad×tabaco, edad×TFG<60 */
+var B = {
+  F_cvd: [-3.307728, 0.7939329, 0.0305239, -0.1606857, -0.2394003, 0.360078, 0.8667604, 0.5360739, 0.6045917, 0.0433769, 0.3151672, -0.1477655, -0.0663612, 0.1197879, -0.0819715, 0.0306769, -0.0946348, -0.27057, -0.078715, -0.1637806],
+  M_cvd: [-3.031168, 0.7688528, 0.0736174, -0.0954431, -0.4347345, 0.3362658, 0.7692857, 0.4386871, 0.5378979, 0.0164827, 0.288879, -0.1337349, -0.0475924, 0.150273, -0.0517874, 0.0191169, -0.1049477, -0.2251948, -0.0895067, -0.1543702],
+  F_ascvd: [-3.819975, 0.719883, 0.1176967, -0.151185, -0.0835358, 0.3592852, 0.8348585, 0.4831078, 0.4864619, 0.0397779, 0.2265309, -0.0592374, -0.0395762, 0.0844423, -0.0567839, 0.0325692, -0.1035985, -0.2417542, -0.0791142, -0.1671492],
+  M_ascvd: [-3.500655, 0.7099847, 0.1658663, -0.1144285, -0.2837212, 0.3239977, 0.7189597, 0.3956973, 0.3690075, 0.0203619, 0.2036522, -0.0865581, -0.0322916, 0.114563, -0.0300005, 0.0232747, -0.0927024, -0.2018525, -0.0970527, -0.1217081]
+};
+/* Orden IC: const, edad, PAS<110, PAS≥110, DM, tabaco, IMC<30, IMC≥30, TFG<60, TFG≥60, antiHTA,
+   antiHTA×PAS≥110, edad×PAS≥110, edad×DM, edad×tabaco, edad×IMC≥30, edad×TFG<60 */
+var HF = {
+  F: [-4.310409, 0.8998235, -0.4559771, 0.3576505, 1.038346, 0.583916, -0.0072294, 0.2997706, 0.7451638, 0.0557087, 0.3534442, -0.0981511, -0.0946663, -0.3581041, -0.1159453, -0.003878, -0.1884289],
+  M: [-3.946391, 0.8972642, -0.6811466, 0.3634461, 0.923776, 0.5023736, -0.0485841, 0.3726929, 0.6926917, 0.0251827, 0.2980922, -0.0497731, -0.1289201, -0.3040924, -0.1401688, 0.0068126, -0.1797778]
+};
+function logit(c, x) { var z = 0; for (var i = 0; i < c.length; i++) z += c[i] * x[i]; return 100 / (1 + Math.exp(-z)); }
+function pct(p) { return FAC.fmt(p, 1) + '%'; }
+
+FAC.calc({
+  title: 'PREVENT',
+  category: 'Riesgo cardiovascular',
+  desc: 'Ecuaciones PREVENT de la American Heart Association: riesgo a 10 años de enfermedad cardiovascular total, aterosclerótica (ASCVD) e insuficiencia cardíaca, en adultos de 30 a 79 años sin enfermedad cardiovascular conocida.',
+  fields: [
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Femenino', value: 'F' }, { label: 'Masculino', value: 'M' }] },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 30, max: 79 },
+    { type: 'number', id: 'sbp', label: 'Presión arterial sistólica', unit: 'mmHg', min: 90, max: 200 },
+    { type: 'number', id: 'tc', label: 'Colesterol total', unit: 'mg/dL', min: 130, max: 320 },
+    { type: 'number', id: 'hdl', label: 'Colesterol HDL', unit: 'mg/dL', min: 20, max: 100 },
+    { type: 'number', id: 'egfr', label: 'Filtrado glomerular estimado', unit: 'mL/min/1,73 m²', min: 15, max: 140, hint: 'Podés calcularlo en <a href="ckd-epi.html">CKD-EPI</a>' },
+    { type: 'number', id: 'bmi', label: 'Índice de masa corporal', unit: 'kg/m²', min: 18.5, max: 39.9, hint: 'Podés calcularlo en <a href="imc.html">IMC</a>' },
+    { type: 'section', label: 'Antecedentes y tratamiento' },
+    { type: 'check', id: 'dm', label: 'Diabetes' },
+    { type: 'check', id: 'smk', label: 'Tabaquismo actual', hint: 'Cualquier consumo de cigarrillos en los últimos 30 días' },
+    { type: 'check', id: 'bptx', label: 'Tratamiento antihipertensivo' },
+    { type: 'check', id: 'statin', label: 'Tratamiento con estatinas' }
+  ],
+  compute: function (v) {
+    if (v.sex == null || [v.age, v.sbp, v.tc, v.hdl, v.egfr, v.bmi].some(function (x) { return x == null; }))
+      return { incomplete: 'Completá sexo, edad, PAS, colesterol total, HDL, filtrado glomerular e IMC.' };
+    if (v.hdl >= v.tc) return { incomplete: 'El HDL debe ser menor que el colesterol total.' };
+    var a = (v.age - 55) / 10, nh = (v.tc - v.hdl) * 0.02586 - 3.5, h = (v.hdl * 0.02586 - 1.3) / 0.3;
+    var s1 = (Math.min(v.sbp, 110) - 110) / 20, s2 = (Math.max(v.sbp, 110) - 130) / 20;
+    var e1 = (Math.min(v.egfr, 60) - 60) / -15, e2 = (Math.max(v.egfr, 60) - 90) / -15;
+    var b1 = (Math.min(v.bmi, 30) - 25) / 5, b2 = (Math.max(v.bmi, 30) - 30) / 5;
+    var dm = v.dm ? 1 : 0, sm = v.smk ? 1 : 0, bp = v.bptx ? 1 : 0, st = v.statin ? 1 : 0;
+    var x = [1, a, nh, h, s1, s2, dm, sm, e1, e2, bp, st, bp * s2, st * nh, a * nh, a * h, a * s2, a * dm, a * sm, a * e1];
+    var xh = [1, a, s1, s2, dm, sm, b1, b2, e1, e2, bp, bp * s2, a * s2, a * dm, a * sm, a * b2, a * e1];
+    var cvd = logit(B[v.sex + '_cvd'], x), asc = logit(B[v.sex + '_ascvd'], x), hf = logit(HF[v.sex], xh);
+    var ac = asc < 3 ? 0 : asc < 5 ? 1 : asc < 10 ? 2 : 3;
+    var catA = ['bajo', 'limítrofe', 'intermedio', 'alto'][ac];
+    var detail = '<ul>' +
+      '<li><b>ASCVD ' + pct(asc) + ' (riesgo ' + catA + ').</b> ' + [
+        'Hipolipemiantes solo si LDL 160–189 mg/dL o riesgo a 30 años ≥ 10%.',
+        'Es razonable indicar hipolipemiantes.',
+        'Se recomiendan hipolipemiantes además de cambios en el estilo de vida.',
+        'Se recomiendan hipolipemiantes además de cambios en el estilo de vida.'][ac] + '</li>' +
+      '<li><b>CV total ' + pct(cvd) + '.</b> ' + (cvd >= 7.5 ? 'Riesgo aumentado: en HTA estadio 1 se recomienda tratamiento antihipertensivo.' : 'Por debajo de 7,5%: en HTA estadio 1, cambios en el estilo de vida.') + '</li>' +
+      '<li><b>Insuficiencia cardíaca ' + pct(hf) + '.</b> ' + (hf >= 5 ? 'Riesgo aumentado de IC (≥ 5%): los biomarcadores (NT-proBNP, troponina) pueden guiar la indicación de ecocardiograma.' : 'Por debajo del umbral de riesgo aumentado (5%).') + '</li>' +
+      '</ul>';
+    return {
+      value: FAC.fmt(cvd, 1), score: cvd, unit: '% a 10 años',
+      label: 'Riesgo CV total ' + (cvd >= 7.5 ? 'aumentado' : 'no aumentado'),
+      level: ac >= 3 || cvd >= 20 ? 'high' : cvd >= 7.5 || ac >= 2 ? 'mid' : 'low',
+      row: ac, detail: detail,
+      extra: [['Enfermedad CV total', pct(cvd)], ['ASCVD', pct(asc)], ['Insuficiencia cardíaca', pct(hf)]]
+    };
+  },
+  scale: { min: 0, max: 30, bands: [{ to: 7.5, level: 'low' }, { to: 20, level: 'mid' }, { to: 30, level: 'high' }] },
+  table: {
+    title: 'Categorías de riesgo ASCVD (guía ACC/AHA de dislipemias 2026)',
+    head: ['PREVENT-ASCVD a 10 años', 'Riesgo', 'Hipolipemiantes'],
+    rows: [['< 3%', 'Bajo', 'Considerar si LDL 160–189 o riesgo a 30 años ≥ 10%'], ['3 a < 5%', 'Limítrofe', 'Razonable'], ['5 a < 10%', 'Intermedio', 'Recomendados'], ['≥ 10%', 'Alto', 'Recomendados']]
+  },
+  notes: '<p>Usa las ecuaciones base (sin UACR, HbA1c ni índice de privación social). No aplica a pacientes con enfermedad cardiovascular establecida.</p>' +
+    '<p>Con LDL ≥ 190 mg/dL, diabetes, enfermedad renal crónica o VIH, los hipolipemiantes se recomiendan independientemente del riesgo estimado.</p>',
+  refs: [
+    'Khan SS, et al. Development and validation of the American Heart Association\'s PREVENT equations. Circulation. 2024;149:430-49.',
+    'American Heart Association. PREVENT™ Online Calculator. professional.heart.org (consultado en noviembre de 2026).'
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASCVD (PCE) · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css?v=5"></head>
+<body>
+<script src="../assets/fac.js?v=5"></script>
+<script>
+/* Pooled Cohort Equations (Goff DC et al., 2013 ACC/AHA). Colesterol en mg/dL. */
+var P = {
+  WF: { a: -29.799, a2: 4.884, tc: 13.540, atc: -3.114, h: -13.578, ah: 3.149, ts: 2.019, ats: 0, us: 1.957, aus: 0, sm: 7.574, asm: -1.665, dm: 0.661, S: 0.96652, M: -29.1817 },
+  BF: { a: 17.114, a2: 0, tc: 0.940, atc: 0, h: -18.920, ah: 4.475, ts: 29.291, ats: -6.432, us: 27.820, aus: -6.087, sm: 0.691, asm: 0, dm: 0.874, S: 0.95334, M: 86.6081 },
+  WM: { a: 12.344, a2: 0, tc: 11.853, atc: -2.664, h: -7.990, ah: 1.769, ts: 1.797, ats: 0, us: 1.764, aus: 0, sm: 7.837, asm: -1.795, dm: 0.658, S: 0.91436, M: 61.1816 },
+  BM: { a: 2.469, a2: 0, tc: 0.302, atc: 0, h: -0.307, ah: 0, ts: 1.916, ats: 0, us: 1.809, aus: 0, sm: 0.549, asm: 0, dm: 0.645, S: 0.89536, M: 19.5425 }
+};
+function pce(g, age, tc, hdl, sbp, tx, sm, dm) {
+  var c = P[g], la = Math.log(age), s = Math.log(sbp), lt = Math.log(tc), lh = Math.log(hdl);
+  var x = c.a * la + c.a2 * la * la + c.tc * lt + c.atc * la * lt + c.h * lh + c.ah * la * lh +
+    (tx ? c.ts * s + c.ats * la * s : c.us * s + c.aus * la * s) + c.sm * sm + c.asm * la * sm + c.dm * dm;
+  return 100 * (1 - Math.pow(c.S, Math.exp(x - c.M)));
+}
+
+FAC.calc({
+  title: 'ASCVD (Pooled Cohort Equations)',
+  category: 'Riesgo cardiovascular',
+  desc: 'Riesgo a 10 años de un primer evento cardiovascular aterosclerótico (IAM, muerte coronaria o ACV) según las ecuaciones de cohortes combinadas ACC/AHA 2013, de 40 a 79 años.',
+  fields: [
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Femenino', value: 'F' }, { label: 'Masculino', value: 'M' }] },
+    { type: 'choice', id: 'race', label: 'Ecuación', hint: 'Las ecuaciones originales se derivaron en población blanca y afroamericana de EE. UU.', options: [
+      { label: 'Blanca u otra', value: 'W' }, { label: 'Afroamericana', value: 'B' }], default: 0 },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 40, max: 79 },
+    { type: 'number', id: 'sbp', label: 'Presión arterial sistólica', unit: 'mmHg', min: 90, max: 200 },
+    { type: 'number', id: 'tc', label: 'Colesterol total', unit: 'mg/dL', min: 130, max: 320 },
+    { type: 'number', id: 'hdl', label: 'Colesterol HDL', unit: 'mg/dL', min: 20, max: 100 },
+    { type: 'section', label: 'Antecedentes y tratamiento' },
+    { type: 'check', id: 'tx', label: 'Tratamiento antihipertensivo' },
+    { type: 'check', id: 'dm', label: 'Diabetes' },
+    { type: 'check', id: 'smk', label: 'Tabaquismo actual' }
+  ],
+  compute: function (v) {
+    if (v.sex == null || [v.age, v.sbp, v.tc, v.hdl].some(function (x) { return x == null; }))
+      return { incomplete: 'Completá sexo, edad, PAS, colesterol total y HDL.' };
+    var r = pce(v.race + v.sex, v.age, v.tc, v.hdl, v.sbp, v.tx, v.smk ? 1 : 0, v.dm ? 1 : 0);
+    var cat = r < 5 ? 0 : r < 7.5 ? 1 : r < 20 ? 2 : 3;
+    return {
+      value: FAC.fmt(r, 1), score: r, unit: '% a 10 años',
+      label: ['Riesgo bajo', 'Riesgo limítrofe', 'Riesgo intermedio', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'mid', 'high'][cat], row: cat,
+      detail: [
+        'Priorizar cambios en el estilo de vida.',
+        'Considerar estatinas si hay potenciadores de riesgo.',
+        'Iniciar estatinas de intensidad moderada; los potenciadores de riesgo o el score de calcio coronario pueden ayudar a decidir.',
+        'Iniciar estatinas de alta intensidad (reducir LDL ≥ 50%).'][cat]
+    };
+  },
+  scale: { min: 0, max: 30, bands: [{ to: 5, level: 'low' }, { to: 20, level: 'mid' }, { to: 30, level: 'high' }] },
+  table: {
+    title: 'Categorías de riesgo (ACC/AHA 2018–2019)',
+    head: ['Riesgo a 10 años', 'Categoría', 'Estatinas'],
+    rows: [['< 5%', 'Bajo', 'Estilo de vida'], ['5 a < 7,5%', 'Limítrofe', 'Considerar si hay potenciadores'], ['7,5 a < 20%', 'Intermedio', 'Intensidad moderada'], ['≥ 20%', 'Alto', 'Alta intensidad']]
+  },
+  notes: '<p>Las guías ACC/AHA más recientes reemplazan estas ecuaciones por <a href="prevent.html">PREVENT</a>, que no usa raza e incorpora la función renal. Las PCE tienden a sobreestimar el riesgo en poblaciones contemporáneas.</p>',
+  refs: [
+    'Goff DC Jr, et al. 2013 ACC/AHA guideline on the assessment of cardiovascular risk. Circulation. 2014;129(25 Suppl 2):S49-73.',
+    'Grundy SM, et al. 2018 AHA/ACC guideline on the management of blood cholesterol. Circulation. 2019;139:e1082-143.'
+  ]
+});
+</script>
+</body>
+</html>

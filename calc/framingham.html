@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Framingham · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css?v=5"></head>
+<body>
+<script src="../assets/fac.js?v=5"></script>
+<script>
+/* Framingham, riesgo cardiovascular general a 10 años (D'Agostino RB et al., Circulation 2008), modelo con lípidos. */
+var F = {
+  F: { a: 2.32888, tc: 1.20904, h: -0.70833, us: 2.76157, ts: 2.82263, sm: 0.52873, dm: 0.69154, S: 0.95012, M: 26.1931 },
+  M: { a: 3.06117, tc: 1.12370, h: -0.93263, us: 1.93303, ts: 1.99881, sm: 0.65451, dm: 0.57367, S: 0.88936, M: 23.9802 }
+};
+function frs(sex, age, tc, hdl, sbp, tx, sm, dm) {
+  var c = F[sex];
+  var x = c.a * Math.log(age) + c.tc * Math.log(tc) + c.h * Math.log(hdl) + (tx ? c.ts : c.us) * Math.log(sbp) + c.sm * sm + c.dm * dm;
+  return 100 * (1 - Math.pow(c.S, Math.exp(x - c.M)));
+}
+/* Edad vascular: edad en la que una persona con factores de riesgo óptimos tendría el mismo riesgo */
+function heartAge(sex, risk) {
+  for (var a = 30; a <= 100; a += 0.5) if (frs(sex, a, 180, 45, 125, false, 0, 0) >= risk) return a;
+  return null;
+}
+
+FAC.calc({
+  title: 'Framingham',
+  category: 'Riesgo cardiovascular',
+  desc: 'Riesgo cardiovascular general a 10 años (coronario, cerebrovascular, arterial periférico e insuficiencia cardíaca) del estudio Framingham, de 30 a 74 años.',
+  fields: [
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Femenino', value: 'F' }, { label: 'Masculino', value: 'M' }] },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 30, max: 74 },
+    { type: 'number', id: 'sbp', label: 'Presión arterial sistólica', unit: 'mmHg', min: 80, max: 220 },
+    { type: 'number', id: 'tc', label: 'Colesterol total', unit: 'mg/dL', min: 80, max: 500 },
+    { type: 'number', id: 'hdl', label: 'Colesterol HDL', unit: 'mg/dL', min: 10, max: 150 },
+    { type: 'section', label: 'Antecedentes y tratamiento' },
+    { type: 'check', id: 'tx', label: 'Tratamiento antihipertensivo' },
+    { type: 'check', id: 'dm', label: 'Diabetes' },
+    { type: 'check', id: 'smk', label: 'Tabaquismo actual' }
+  ],
+  compute: function (v) {
+    if (v.sex == null || [v.age, v.sbp, v.tc, v.hdl].some(function (x) { return x == null; }))
+      return { incomplete: 'Completá sexo, edad, PAS, colesterol total y HDL.' };
+    var r = frs(v.sex, v.age, v.tc, v.hdl, v.sbp, v.tx, v.smk ? 1 : 0, v.dm ? 1 : 0);
+    var ha = heartAge(v.sex, r);
+    var cat = r < 10 ? 0 : r <= 20 ? 1 : 2;
+    return {
+      value: FAC.fmt(r, 1), score: r, unit: '% a 10 años',
+      label: ['Riesgo bajo', 'Riesgo intermedio', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat,
+      detail: 'Riesgo de un primer evento cardiovascular a 10 años: <b>' + FAC.fmt(r, 1) + '%</b>.',
+      extra: [['Edad vascular', ha == null ? '> 100 años' : (ha <= 30 ? '≤ 30 años' : FAC.fmt(Math.round(ha), 0) + ' años')]]
+    };
+  },
+  scale: { min: 0, max: 40, bands: [{ to: 10, level: 'low' }, { to: 20, level: 'mid' }, { to: 40, level: 'high' }] },
+  table: { head: ['Riesgo a 10 años', 'Categoría'], rows: [['< 10%', 'Bajo'], ['10–20%', 'Intermedio'], ['> 20%', 'Alto']] },
+  notes: '<p>La edad vascular es la edad a la que una persona del mismo sexo con factores de riesgo óptimos (PAS 125 mmHg sin tratamiento, colesterol total 180 mg/dL, HDL 45 mg/dL, sin tabaquismo ni diabetes) tendría el mismo riesgo.</p><p>Framingham se derivó en población de EE. UU. y puede sobreestimar el riesgo en otras poblaciones.</p>',
+  refs: ['D\'Agostino RB Sr, et al. General cardiovascular risk profile for use in primary care: the Framingham Heart Study. Circulation. 2008;117:743-53.']
+});
+</script>
+</body>
+</html>

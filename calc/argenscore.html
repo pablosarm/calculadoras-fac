@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ArgenSCORE · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css?v=5"></head>
+<body>
+<script src="../assets/fac.js?v=5"></script>
+<script>
+/* ArgenSCORE: puntajes de Carosella et al., Rev Argent Cardiol 2014;82:6-12 (Figura 1).
+   Mortalidad: curva logística ajustada a la tabla de conversión publicada (Rev Argent Cardiol 2021, material suplementario);
+   error máximo frente a la tabla: 0,01 puntos porcentuales. */
+var CURVE = { II: [-5.85234, 0.09200], I: [-4.49970, 0.07999] };
+function yn(id, label, pts, hint) { return { type: 'check', id: id, label: label, hint: hint, points: pts }; }
+
+FAC.calc({
+  title: 'ArgenSCORE',
+  category: 'Riesgo quirúrgico',
+  desc: 'Primer score latinoamericano de riesgo en cirugía cardíaca. Estima la mortalidad intrahospitalaria.',
+  fields: [
+    { type: 'choice', id: 'ver', label: 'Versión', default: 0, hidePoints: true, options: [
+      { label: 'ArgenSCORE II (2007)', value: 'II', hint: 'Centros con mortalidad < 6%' },
+      { label: 'ArgenSCORE I (1999)', value: 'I', hint: 'Centros con mortalidad > 6%' }] },
+    { type: 'section', label: 'Factores del paciente' },
+    { type: 'choice', id: 'age', label: 'Edad', options: [
+      { label: '≤ 59', points: 0 }, { label: '60–69', points: 7 }, { label: '70–79', points: 11 }, { label: '≥ 80', points: 21.5 }] },
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Masculino', points: 0 }, { label: 'Femenino', points: 5 }] },
+    yn('insul', 'Insulinodependencia', 11, 'Insulina sola o combinada con hipoglucemiantes orales'),
+    yn('renal', 'Insuficiencia renal', 6, 'Creatinina > 2,0 mg/dL antes de la cirugía'),
+    yn('pvd', 'Vasculopatía periférica', 6.5, 'Claudicación, amputación, cirugía o angioplastia periférica o carotídea, patología de aorta abdominal'),
+    yn('redo', 'Cirugía cardíaca previa', 7.5),
+    yn('iabp', 'Balón de contrapulsación preoperatorio', 6, 'Ingresa a quirófano con el BCIA funcionando'),
+    { type: 'section', label: 'Factores cardíacos' },
+    { type: 'choice', id: 'vessels', label: 'Vasos coronarios enfermos', hint: 'Lesión de tronco ≥ 50% = 2 vasos', options: [
+      { label: '0', points: 0 }, { label: '1', points: 4 }, { label: '2', points: 7.5 }, { label: '3', points: 14 }] },
+    { type: 'choice', id: 'lv', label: 'Función ventricular izquierda', stack: true, options: [
+      { label: 'Normal o deterioro leve', hint: 'FEVI > 50%', points: 0 }, { label: 'Deterioro moderado', hint: 'FEVI 31–50%', points: 2.5 },
+      { label: 'Deterioro grave', hint: 'FEVI ≤ 30%', points: 9 }] },
+    { type: 'section', label: 'Factores operatorios' },
+    { type: 'choice', id: 'prio', label: 'Prioridad', stack: true, options: [
+      { label: 'Electiva', points: 0 }, { label: 'Urgencia', hint: 'Internado, cirugía en la misma internación (≥ 48 h)', points: 8.5 },
+      { label: 'Emergencia', hint: 'Dentro de las 24 h de la indicación', points: 14.5 }, { label: 'Salvataje', hint: 'Ingreso inmediato a quirófano', points: 32.5 }] },
+    { type: 'choice', id: 'ao', label: 'Cirugía valvular aórtica', options: [
+      { label: 'No', points: 0 }, { label: 'Reemplazo', points: 2.5 }, { label: 'Plástica', points: 5.5 }] },
+    { type: 'choice', id: 'mit', label: 'Cirugía valvular mitral', options: [
+      { label: 'No', points: 0 }, { label: 'Reemplazo', points: 15.5 }, { label: 'Plástica', points: 5.5 }] },
+    yn('aorta', 'Reemplazo de aorta torácica', 13),
+    yn('dis', 'Disección aórtica aguda tipo A', 5.5),
+    yn('comb', 'Cirugía combinada', 5, 'Dos o más tipos de procedimiento en el mismo acto quirúrgico'),
+    yn('tx', 'Trasplante cardíaco', 15)
+  ],
+  compute: function (v, t) {
+    var need = ['age', 'sex', 'vessels', 'lv', 'prio', 'ao', 'mit'].filter(function (k) { return v[k] == null; }).length;
+    if (need) return { incomplete: 'Completá todas las opciones de selección (faltan ' + need + ').' };
+    var c = CURVE[v.ver], p = 100 / (1 + Math.exp(-(c[0] + c[1] * t)));
+    var other = CURVE[v.ver === 'II' ? 'I' : 'II'], p2 = 100 / (1 + Math.exp(-(other[0] + other[1] * t)));
+    var cat = p < 2 ? 0 : p < 5 ? 1 : 2;
+    return {
+      value: FAC.fmt(p, 2), score: p, unit: '% mortalidad',
+      label: ['Riesgo bajo', 'Riesgo intermedio', 'Riesgo alto'][cat],
+      level: ['low', 'mid', 'high'][cat],
+      detail: 'Mortalidad intrahospitalaria estimada con ArgenSCORE ' + v.ver + ': <b>' + FAC.fmt(p, 2) + '%</b>.',
+      extra: [['Puntaje total', FAC.fmt(t, 1) + ' pts'], ['Con ArgenSCORE ' + (v.ver === 'II' ? 'I' : 'II'), FAC.fmt(p2, 2) + '%']]
+    };
+  },
+  scale: { min: 0, max: 15, bands: [{ to: 2, level: 'low' }, { to: 5, level: 'mid' }, { to: 15, level: 'high' }] },
+  notes: '<p>El puntaje de cada factor equivale a 10 veces su coeficiente en la regresión logística. ArgenSCORE II es la versión recalibrada en 2007 que usa la calculadora oficial. Los autores sugieren elegir la versión según la mortalidad observada en cada centro: <b>II</b> si es menor de 6% y <b>I</b> si es mayor.</p>' +
+    '<p>Las categorías de riesgo (bajo &lt; 2%, intermedio 2–5%, alto &gt; 5%) son orientativas; ArgenSCORE no define categorías oficiales.</p>',
+  refs: [
+    'Carosella VC, et al. The first Latin-American risk stratification system for cardiac surgery: can be used as a graphic pocket-card score. Interact CardioVasc Thorac Surg. 2009;9:203-8.',
+    'Carosella VC, et al. Validación prospectiva y multicéntrica del ArgenSCORE en la cirugía de reemplazo valvular aórtico. Comparación con el EuroSCORE I y el EuroSCORE II. Rev Argent Cardiol. 2014;82:6-12.',
+    'Estimación del riesgo en cirugía cardíaca en el "mundo real": ArgenSCORE ajustado al centro. Rev Argent Cardiol. 2021;89(1).',
+    'ArgenSCORE calculadora interactiva. www.argenscore.org.'
+  ]
+});
+</script>
+</body>
+</html>

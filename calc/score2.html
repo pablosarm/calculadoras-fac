@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SCORE2 · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css?v=5"></head>
+<body>
+<script src="../assets/fac.js?v=5"></script>
+<script>
+/* SCORE2 (40–69 años) y SCORE2-OP (≥ 70 años). ESC 2021. Colesterol en mmol/L.
+   Recalibración: riesgo = 1 − exp(−exp(s1 + s2 × ln(−ln(1 − riesgo sin calibrar)))) */
+var SCALES = {
+  y: { low: { M: [-0.5699, 0.7476], F: [-0.7380, 0.7019] }, mod: { M: [-0.1565, 0.8009], F: [-0.3143, 0.7701] },
+       high: { M: [0.3207, 0.9360], F: [0.5710, 0.9369] }, vhigh: { M: [0.5836, 0.8294], F: [0.9412, 0.8329] } },
+  op: { low: { M: [-0.34, 1.19], F: [-0.52, 1.01] }, mod: { M: [0.01, 1.25], F: [-0.1, 1.1] },
+        high: { M: [0.08, 1.15], F: [0.38, 1.09] }, vhigh: { M: [0.05, 0.7], F: [0.38, 0.69] } }
+};
+function score2(sex, age, smk, sbp, tc, hdl, region) {
+  var raw, s;
+  if (age < 70) {
+    var a = (age - 60) / 5, p = (sbp - 120) / 20, t = tc - 6, h = (hdl - 1.3) / 0.5, lp;
+    if (sex === 'M') lp = 0.3742 * a + 0.6012 * smk + 0.2777 * p + 0.1458 * t - 0.2698 * h - 0.0755 * a * smk - 0.0255 * a * p - 0.0281 * a * t + 0.0426 * a * h;
+    else lp = 0.4648 * a + 0.7744 * smk + 0.3131 * p + 0.1002 * t - 0.2606 * h - 0.1088 * a * smk - 0.0277 * a * p - 0.0226 * a * t + 0.0613 * a * h;
+    raw = 1 - Math.pow(sex === 'M' ? 0.9605 : 0.9776, Math.exp(lp));
+    s = SCALES.y[region][sex];
+  } else {
+    var A = age - 73, P = sbp - 150, T = tc - 6, H = hdl - 1.4, l;
+    if (sex === 'M') { l = 0.0634 * A + 0.3524 * smk + 0.0094 * P + 0.0850 * T - 0.3564 * H - 0.0247 * A * smk - 0.0005 * A * P + 0.0073 * A * T + 0.0091 * A * H; raw = 1 - Math.pow(0.7576, Math.exp(l - 0.0929)); }
+    else { l = 0.0789 * A + 0.4921 * smk + 0.0102 * P + 0.0605 * T - 0.3040 * H - 0.0255 * A * smk - 0.0004 * A * P - 0.0009 * A * T + 0.0154 * A * H; raw = 1 - Math.pow(0.8082, Math.exp(l - 0.229)); }
+    s = SCALES.op[region][sex];
+  }
+  return 100 * (1 - Math.exp(-Math.exp(s[0] + s[1] * Math.log(-Math.log(1 - raw)))));
+}
+var CUT = [[50, 2.5, 7.5], [70, 5, 10], [200, 7.5, 15]];
+
+FAC.calc({
+  title: 'SCORE2 / SCORE2-OP',
+  category: 'Riesgo cardiovascular',
+  desc: 'Riesgo a 10 años de eventos cardiovasculares fatales y no fatales (ESC 2021) en personas sin enfermedad cardiovascular ni diabetes. SCORE2 de 40 a 69 años y SCORE2-OP de 70 a 89 años.',
+  fields: [
+    { type: 'choice', id: 'region', label: 'Región de riesgo (ESC)', default: 1, hidePoints: true, options: [
+      { label: 'Bajo', value: 'low' }, { label: 'Moderado', value: 'mod' }, { label: 'Alto', value: 'high' }, { label: 'Muy alto', value: 'vhigh' }] },
+    { type: 'choice', id: 'sex', label: 'Sexo', options: [{ label: 'Femenino', value: 'F' }, { label: 'Masculino', value: 'M' }] },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 40, max: 89 },
+    { type: 'number', id: 'sbp', label: 'Presión arterial sistólica', unit: 'mmHg', min: 80, max: 220 },
+    { type: 'number', id: 'tc', label: 'Colesterol total', unit: 'mg/dL', min: 80, max: 500 },
+    { type: 'number', id: 'hdl', label: 'Colesterol HDL', unit: 'mg/dL', min: 10, max: 150 },
+    { type: 'check', id: 'smk', label: 'Tabaquismo actual' },
+    { type: 'check', id: 'dm', label: 'Tiene diabetes', hint: 'SCORE2 no aplica: corresponde SCORE2-Diabetes' }
+  ],
+  compute: function (v) {
+    if (v.dm) return { incomplete: 'SCORE2 no está validado en personas con diabetes. Para ellas corresponde SCORE2-Diabetes.' };
+    if (v.sex == null || [v.age, v.sbp, v.tc, v.hdl].some(function (x) { return x == null; }))
+      return { incomplete: 'Completá sexo, edad, PAS, colesterol total y HDL.' };
+    if (v.hdl >= v.tc) return { incomplete: 'El HDL debe ser menor que el colesterol total.' };
+    var r = score2(v.sex, v.age, v.smk ? 1 : 0, v.sbp, v.tc / 38.67, v.hdl / 38.67, v.region);
+    var c = CUT.filter(function (x) { return v.age < x[0]; })[0];
+    var cat = r < c[1] ? 0 : r < c[2] ? 1 : 2;
+    var row = (v.age < 50 ? 0 : v.age < 70 ? 1 : 2);
+    return {
+      value: FAC.fmt(r, 1), score: r, unit: '% a 10 años',
+      label: ['Riesgo bajo a moderado', 'Riesgo alto', 'Riesgo muy alto'][cat],
+      level: ['low', 'mid', 'high'][cat], row: row,
+      detail: [
+        'En general no se recomienda tratamiento farmacológico de factores de riesgo, salvo otros modificadores de riesgo.',
+        'Se debe considerar el tratamiento de los factores de riesgo (clase IIa).',
+        'Se recomienda el tratamiento de los factores de riesgo (clase I).'][cat],
+      extra: [['Modelo', v.age < 70 ? 'SCORE2' : 'SCORE2-OP'], ['Puntos de corte para la edad', '< ' + FAC.fmt(c[1], 1) + '% · ' + FAC.fmt(c[1], 1) + '–' + FAC.fmt(c[2], 1) + '% · ≥ ' + FAC.fmt(c[2], 1) + '%'], ['Colesterol no-HDL', FAC.fmt(v.tc - v.hdl, 0) + ' mg/dL']]
+    };
+  },
+  scale: function (v) {
+    var c = CUT.filter(function (x) { return (v.age || 55) < x[0]; })[0];
+    return { min: 0, max: c[2] * 2, bands: [{ to: c[1], level: 'low' }, { to: c[2], level: 'mid' }, { to: c[2] * 2, level: 'high' }] };
+  },
+  table: {
+    title: 'Categorías de riesgo según la edad (ESC 2021)',
+    head: ['Edad', 'Bajo a moderado', 'Alto', 'Muy alto'],
+    rows: [['< 50 años', '< 2,5%', '2,5 a < 7,5%', '≥ 7,5%'], ['50–69 años', '< 5%', '5 a < 10%', '≥ 10%'], ['≥ 70 años', '< 7,5%', '7,5 a < 15%', '≥ 15%']]
+  },
+  notes: '<p>Las regiones europeas se definen por la mortalidad cardiovascular de cada país. Para Latinoamérica existe la recalibración <b>SCORE2-LAC</b> (Eur Heart J 2026), que ubica a la Argentina en la región de alto riesgo; sus constantes se publicaron en el material suplementario y se incorporarán a esta calculadora cuando estén disponibles.</p>',
+  refs: [
+    'SCORE2 working group and ESC Cardiovascular risk collaboration. SCORE2 risk prediction algorithms. Eur Heart J. 2021;42:2439-54.',
+    'SCORE2-OP working group and ESC Cardiovascular risk collaboration. SCORE2-OP risk prediction algorithms. Eur Heart J. 2021;42:2455-67.',
+    'Visseren FLJ, et al. 2021 ESC Guidelines on cardiovascular disease prevention in clinical practice. Eur Heart J. 2021;42:3227-337.',
+    'Bijkerk S, et al. Development and external validation of the SCORE2 models in Latin America and the Caribbean (SCORE2-LAC). Eur Heart J. 2026. doi:10.1093/eurheartj/ehag698.'
+  ]
+});
+</script>
+</body>
+</html>

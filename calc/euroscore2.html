@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EuroSCORE II · Calculadoras FAC</title><link rel="stylesheet" href="../assets/fac.css?v=5"></head>
+<body>
+<script src="../assets/fac.js?v=5"></script>
+<script>
+/* EuroSCORE II (Nashef 2012). Coeficientes de la calculadora oficial euroscore.org. Constante −5,324537. */
+var C = 0.0285181; // por año de edad (> 60)
+FAC.calc({
+  title: 'EuroSCORE II',
+  category: 'Riesgo quirúrgico',
+  desc: 'Estima la mortalidad operatoria (intrahospitalaria) en cirugía cardíaca del adulto.',
+  fields: [
+    { type: 'section', label: 'Factores del paciente' },
+    { type: 'number', id: 'age', label: 'Edad', unit: 'años', min: 18, max: 100 },
+    { type: 'choice', id: 'sex', label: 'Sexo', hidePoints: true, options: [{ label: 'Masculino', points: 0 }, { label: 'Femenino', points: 0.2196434 }] },
+    { type: 'choice', id: 'renal', label: 'Función renal (clearance de creatinina)', hint: 'Cockcroft-Gault', stack: true, hidePoints: true, options: [
+      { label: 'Normal', hint: 'CC > 85 mL/min', points: 0 }, { label: 'Moderada', hint: 'CC 50–85 mL/min', points: 0.303553 },
+      { label: 'Severa', hint: 'CC < 50 mL/min', points: 0.8592256 }, { label: 'Diálisis', hint: 'Independientemente del CC', points: 0.6421508 }] },
+    { type: 'check', id: 'art', label: 'Arteriopatía extracardíaca', hint: 'Claudicación, estenosis carotídea > 50%, amputación, cirugía vascular previa o planificada', points: 0.5360268 },
+    { type: 'check', id: 'mob', label: 'Movilidad reducida', hint: 'Por disfunción musculoesquelética o neurológica grave', points: 0.2407181 },
+    { type: 'check', id: 'redo', label: 'Cirugía cardíaca previa', hint: 'Con apertura del pericardio', points: 1.118599 },
+    { type: 'check', id: 'lung', label: 'Enfermedad pulmonar crónica', hint: 'Uso prolongado de broncodilatadores o corticoides', points: 0.1886564 },
+    { type: 'check', id: 'endo', label: 'Endocarditis activa', hint: 'En tratamiento antibiótico al momento de la cirugía', points: 0.6194522 },
+    { type: 'check', id: 'crit', label: 'Estado preoperatorio crítico', hint: 'TV/FV o muerte súbita abortada, masaje cardíaco, ARM, inotrópicos, BCIA/asistencia, IRA anúrica u oligúrica', points: 1.086517 },
+    { type: 'check', id: 'dm', label: 'Diabetes insulinodependiente', points: 0.3542749 },
+    { type: 'section', label: 'Factores cardíacos' },
+    { type: 'choice', id: 'nyha', label: 'Clase funcional NYHA', hidePoints: true, options: [
+      { label: 'I', points: 0 }, { label: 'II', points: 0.1070545 }, { label: 'III', points: 0.2958358 }, { label: 'IV', points: 0.5597929 }] },
+    { type: 'check', id: 'ccs4', label: 'Angina CCS clase 4', hint: 'Angina en reposo', points: 0.2226147 },
+    { type: 'choice', id: 'lv', label: 'Función ventricular izquierda', stack: true, hidePoints: true, options: [
+      { label: 'Buena', hint: 'FEVI > 50%', points: 0 }, { label: 'Moderada', hint: 'FEVI 31–50%', points: 0.3150652 },
+      { label: 'Mala', hint: 'FEVI 21–30%', points: 0.8084096 }, { label: 'Muy mala', hint: 'FEVI ≤ 20%', points: 0.9346919 }] },
+    { type: 'check', id: 'mi', label: 'IAM reciente', hint: 'En los últimos 90 días', points: 0.1528943 },
+    { type: 'choice', id: 'ph', label: 'Hipertensión pulmonar (PSAP)', hidePoints: true, options: [
+      { label: 'No', points: 0 }, { label: '31–55 mmHg', points: 0.1788899 }, { label: '> 55 mmHg', points: 0.3491475 }] },
+    { type: 'section', label: 'Factores de la cirugía' },
+    { type: 'choice', id: 'urg', label: 'Urgencia', stack: true, hidePoints: true, options: [
+      { label: 'Electiva', points: 0 }, { label: 'Urgente', hint: 'Internado, no puede ser dado de alta antes de la cirugía', points: 0.3174673 },
+      { label: 'Emergencia', hint: 'Antes del inicio de la siguiente jornada laboral', points: 0.7039121 },
+      { label: 'Salvataje', hint: 'RCP en curso camino al quirófano o antes de la inducción', points: 1.362947 }] },
+    { type: 'choice', id: 'weight', label: 'Magnitud de la intervención', stack: true, hidePoints: true, options: [
+      { label: 'CRM aislada', points: 0 }, { label: 'Un procedimiento distinto de CRM', hint: 'Ej.: cirugía valvular aislada', points: 0.0062118 },
+      { label: 'Dos procedimientos', points: 0.5521478 }, { label: 'Tres o más procedimientos', points: 0.9724533 }] },
+    { type: 'check', id: 'aorta', label: 'Cirugía de aorta torácica', points: 0.6527205 }
+  ],
+  compute: function (v, t) {
+    var need = ['sex', 'renal', 'nyha', 'lv', 'ph', 'urg', 'weight'].filter(function (k) { return v[k] == null; }).length;
+    if (v.age == null || need) return { incomplete: 'Completá la edad y todas las opciones de selección' + (need ? ' (faltan ' + need + ')' : '') + '.' };
+    var ageX = v.age <= 60 ? 1 : v.age - 59;
+    var z = -5.324537 + C * ageX + t;
+    var p = 100 / (1 + Math.exp(-z));
+    var cat = p < 4 ? 0 : p <= 8 ? 1 : 2;
+    return {
+      value: FAC.fmt(p, 2), score: p, unit: '% mortalidad',
+      label: ['Riesgo quirúrgico bajo', 'Riesgo quirúrgico intermedio', 'Riesgo quirúrgico alto'][cat],
+      level: ['low', 'mid', 'high'][cat], row: cat,
+      detail: 'Mortalidad operatoria estimada: <b>' + FAC.fmt(p, 2) + '%</b>.'
+    };
+  },
+  scale: { min: 0, max: 16, bands: [{ to: 4, level: 'low' }, { to: 8, level: 'mid' }, { to: 16, level: 'high' }] },
+  table: {
+    title: 'Interpretación orientativa',
+    head: ['EuroSCORE II', 'Riesgo quirúrgico'],
+    rows: [['< 4%', 'Bajo'], ['4–8%', 'Intermedio'], ['> 8%', 'Alto']]
+  },
+  notes: '<p>Los puntos de corte son orientativos y se usan, junto con el STS, en la evaluación del Heart Team (por ejemplo, para decidir entre cirugía y TAVI). EuroSCORE II no tiene categorías de riesgo oficiales.</p>',
+  refs: [
+    'Nashef SAM, et al. EuroSCORE II. Eur J Cardiothorac Surg. 2012;41:734-45.',
+    'EuroSCORE II online calculator. www.euroscore.org (consultado en noviembre de 2026).',
+    'Vahanian A, et al. 2021 ESC/EACTS Guidelines for the management of valvular heart disease. Eur Heart J. 2022;43:561-632.'
+  ]
+});
+</script>
+</body>
+</html>
