@@ -13,7 +13,7 @@ window.FAC_CATEGORIES = [
 
 window.FAC_CALCS = [
   { cat: 'riesgo', file: 'prevent.html', title: 'PREVENT (AHA)', desc: 'Riesgo a 10 años de enfermedad CV total, ASCVD e insuficiencia cardíaca.', kw: 'prevent aha ascvd prevencion primaria riesgo cardiovascular americano' },
-  { cat: 'riesgo', file: 'score2.html', title: 'SCORE2 / SCORE2-OP', desc: 'Riesgo CV a 10 años de la ESC, de 40 a 89 años.', kw: 'score2 score2-op europeo esc prevencion primaria riesgo cardiovascular lac panamericano' },
+  { cat: 'riesgo', file: 'score2.html', title: 'SCORE2 / SCORE2-LAC', desc: 'Riesgo CV a 10 años: versión Latinoamérica (SCORE2-LAC) y europea (SCORE2 / SCORE2-OP).', kw: 'score2 score2-op europeo esc prevencion primaria riesgo cardiovascular lac panamericano' },
   { cat: 'riesgo', file: 'score2-diabetes.html', title: 'SCORE2-Diabetes', desc: 'Riesgo CV a 10 años en diabetes tipo 2, de 40 a 69 años (ESC 2023).', kw: 'score2 diabetes dbt europeo esc riesgo cardiovascular' },
   { cat: 'riesgo', file: 'pce.html', title: 'ASCVD (Pooled Cohort Equations)', desc: 'Riesgo ASCVD a 10 años ACC/AHA 2013, de 40 a 79 años.', kw: 'pce pooled cohort ascvd acc aha 2013 riesgo cardiovascular estatinas' },
   { cat: 'riesgo', file: 'framingham.html', title: 'Framingham', desc: 'Riesgo cardiovascular general a 10 años y edad vascular.', kw: 'framingham dagostino edad vascular riesgo cardiovascular' },
